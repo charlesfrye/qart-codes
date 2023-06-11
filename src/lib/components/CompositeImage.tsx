@@ -1,12 +1,5 @@
-import {
-  DetailedHTMLProps,
-  ImgHTMLAttributes,
-  memo,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
-import { FC } from "../types";
+import { forwardRef, memo, useLayoutEffect, useRef, useState } from "react";
+import { FC, FRC, ImgProps } from "../types";
 
 type CompositeImageProps = {
   imgSrc: string;
@@ -55,7 +48,7 @@ const CompositeComp: FC<CompositeProps> = ({
   }, []);
 
   return (
-    <div className="flex" ref={containerRef}>
+    <CompositeContainer ref={containerRef}>
       {containerWidth != null && (
         <>
           <ImageContainer widthPercentage={position}>
@@ -72,7 +65,7 @@ const CompositeComp: FC<CompositeProps> = ({
           </ImageContainer>
         </>
       )}
-    </div>
+    </CompositeContainer>
   );
 };
 
@@ -80,6 +73,14 @@ const Composite = memo(CompositeComp);
 
 const Container: FC = ({ children }) => (
   <div className="w-full max-w-lg">{children}</div>
+);
+
+const CompositeContainer: FRC<HTMLDivElement> = forwardRef(
+  ({ children }, ref) => (
+    <div className="flex" ref={ref}>
+      {children}
+    </div>
+  )
 );
 
 type ImageContainerProps = {
@@ -112,8 +113,6 @@ const Slider: FC<SliderProps> = ({ value, onChange }) => (
   />
 );
 
-const Image: FC<
-  DetailedHTMLProps<ImgHTMLAttributes<HTMLImageElement>, HTMLImageElement>
-> = ({ ...imgProps }) => (
+const Image: FC<ImgProps> = ({ ...imgProps }) => (
   <img className="max-w-none aspect-square" {...imgProps} />
 );

@@ -1,17 +1,11 @@
-import {
-  ButtonHTMLAttributes,
-  DetailedHTMLProps,
-  InputHTMLAttributes,
-  useCallback,
-  useState,
-} from "react";
+import { wait } from "@laxels/utils";
+import { useCallback, useState } from "react";
 import { PLACEHOLDER_IMAGE_URL } from "./config";
 import { CompositeImage } from "./lib/components/CompositeImage";
-import { generateQRCodeDataURL } from "./lib/qrcode";
-import { FC } from "./lib/types";
-import { downloadImage } from "./lib/download";
-import { wait } from "@laxels/utils";
 import { Loader } from "./lib/components/Loader";
+import { downloadImage } from "./lib/download";
+import { generateQRCodeDataURL } from "./lib/qrcode";
+import { ButtonProps, DivProps, FC, FormProps, InputProps } from "./lib/types";
 
 function App() {
   const [prompt, setPrompt] = useState(``);
@@ -80,37 +74,28 @@ function App() {
 
 export default App;
 
-const Container: FC = ({ children }) => (
+const Container: FC<DivProps> = ({ children }) => (
   <div className="h-full flex flex-col items-center justify-center">
     {children}
   </div>
 );
 
-const UserInput: FC = ({ children }) => (
+const UserInput: FC<FormProps> = ({ children }) => (
   <form className="" onSubmit={(e) => e.preventDefault()}>
     {children}
   </form>
 );
 
-const Input: FC<
-  DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>
-> = ({ ...inputProps }) => (
+const Input: FC<InputProps> = ({ ...inputProps }) => (
   <input
     className="w-full border border-gray-500 rounded py-2 px-4 mt-4 first:mt-0"
     {...inputProps}
   />
 );
 
-// bg-gray-300
-// bg-blue-600
-
-const Button: FC<
-  DetailedHTMLProps<ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement>
-> = ({ ...buttonProps }) => (
+const Button: FC<ButtonProps> = ({ ...buttonProps }) => (
   <button
-    className={`w-full mt-4 bg-${
-      buttonProps.disabled ? `gray-300` : `blue-600`
-    } text-white rounded py-2 px-4`}
+    className="w-full mt-4 disabled:bg-gray-300 bg-blue-600 text-white rounded py-2 px-4"
     {...buttonProps}
   />
 );
