@@ -57,7 +57,9 @@ function App() {
           value={qrCodeValue}
           onChange={(e) => setQRCodeValue(e.target.value)}
         />
-        <Button onClick={generate}>GENERATE</Button>
+        <Button disabled={loading} onClick={generate}>
+          GENERATE
+        </Button>
       </UserInput>
       {loading && <Loader />}
       {qrCodeDataURL && (
@@ -84,7 +86,11 @@ const Container: FC = ({ children }) => (
   </div>
 );
 
-const UserInput: FC = ({ children }) => <div className="">{children}</div>;
+const UserInput: FC = ({ children }) => (
+  <form className="" onSubmit={(e) => e.preventDefault()}>
+    {children}
+  </form>
+);
 
 const Input: FC<
   DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>
@@ -95,11 +101,15 @@ const Input: FC<
   />
 );
 
+// bg-gray-300
+
 const Button: FC<
   DetailedHTMLProps<ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement>
 > = ({ ...buttonProps }) => (
   <button
-    className="w-full mt-4 bg-blue-600 text-white rounded py-2 px-4"
+    className={`w-full mt-4 bg-${
+      buttonProps.disabled ? `gray-300` : `blue-600`
+    } text-white rounded py-2 px-4`}
     {...buttonProps}
   />
 );
