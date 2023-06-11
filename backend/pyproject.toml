@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "qart-codes-backend"
+license = "MIT"
+version = "0.0.1"
+description = "Generates QR codes with pleasing corruptions described in natural language"
+homepage = "https://tfs.ai/qart"
+repository = "https://github.com/charlesfrye/qart-codes/backend"
+authors = ["Charles Frye <cfrye59@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+modal-client = "^0.49.2364"
+
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.0.272"
+black = "^23.3.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
