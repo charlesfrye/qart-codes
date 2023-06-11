@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { toast } from "react-toastify";
 import { CompositeImage } from "./lib/components/CompositeImage";
 import { Loader } from "./lib/components/Loader";
 import { createDivContainer } from "./lib/components/helpers";
@@ -14,6 +15,15 @@ function App() {
   const [loading, setLoading] = useState(false);
 
   const generate = useCallback(async () => {
+    if (!prompt) {
+      toast(`Please insert a valid prompt`);
+      return;
+    }
+    if (!qrCodeValue) {
+      toast(`Please insert a valid QR code value`);
+      return;
+    }
+
     setLoading(true);
 
     const dataURL = await generateQRCodeDataURL();
@@ -24,7 +34,7 @@ function App() {
     setQRCodeDataURL(dataURL);
     setImgSrc(generatedSrc);
     setLoading(false);
-  }, []);
+  }, [prompt, qrCodeValue]);
 
   const downloadQRCode = useCallback(async () => {
     if (!qrCodeDataURL) {
@@ -93,7 +103,7 @@ const UserInput: FC<FormProps> = ({ children }) => (
 
 const Input: FC<InputProps> = ({ ...inputProps }) => (
   <input
-    className="w-full border border-gray-500 rounded-xl py-2.5 px-8 mt-4 first:mt-0"
+    className="w-full border border-gray-500 rounded-xl py-2.5 px-8 mt-4 first:mt-0 focus-visible:outline-none"
     {...inputProps}
   />
 );
