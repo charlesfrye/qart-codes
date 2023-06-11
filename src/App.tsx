@@ -102,6 +102,7 @@ const Input: FC<
 );
 
 // bg-gray-300
+// bg-blue-600
 
 const Button: FC<
   DetailedHTMLProps<ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement>
