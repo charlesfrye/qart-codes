@@ -15,8 +15,12 @@ function App() {
 
   const generate = useCallback(async () => {
     setLoading(true);
-    await wait(5000);
+
     const dataURL = await generateQRCodeDataURL();
+
+    // TODO: fetch from backend
+    await wait(5000);
+
     setQRCodeDataURL(dataURL);
     setLoading(false);
   }, []);
