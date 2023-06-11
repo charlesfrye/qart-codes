@@ -1,9 +1,10 @@
 import { useCallback, useState } from "react";
 import { CompositeImage } from "./lib/components/CompositeImage";
 import { Loader } from "./lib/components/Loader";
+import { createDivContainer } from "./lib/components/helpers";
 import { downloadImage } from "./lib/download";
 import { generateImage, generateQRCodeDataURL } from "./lib/qrcode";
-import { ButtonProps, DivProps, FC, FormProps, InputProps } from "./lib/types";
+import { ButtonProps, FC, FormProps, InputProps } from "./lib/types";
 
 function App() {
   const [prompt, setPrompt] = useState(``);
@@ -82,16 +83,12 @@ function App() {
 
 export default App;
 
-const Container: FC<DivProps> = ({ children }) => (
-  <div className="min-h-full flex flex-col items-center justify-center p-4 bg-blue">
-    {children}
-  </div>
+const Container = createDivContainer(
+  "min-h-full flex flex-col items-center justify-center p-4 bg-blue"
 );
 
 const UserInput: FC<FormProps> = ({ children }) => (
-  <form className="" onSubmit={(e) => e.preventDefault()}>
-    {children}
-  </form>
+  <form onSubmit={(e) => e.preventDefault()}>{children}</form>
 );
 
 const Input: FC<InputProps> = ({ ...inputProps }) => (
@@ -108,10 +105,6 @@ const Button: FC<ButtonProps> = ({ ...buttonProps }) => (
   />
 );
 
-const ResultsContainer: FC<DivProps> = ({ children }) => (
-  <div className="mt-16">{children}</div>
-);
+const ResultsContainer = createDivContainer("mt-16");
 
-const DownloadButtons: FC = ({ children }) => (
-  <div className="">{children}</div>
-);
+const DownloadButtons = createDivContainer(``);

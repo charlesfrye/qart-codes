@@ -2,6 +2,7 @@ import _ from "lodash";
 import { memo, useEffect, useRef, useState } from "react";
 import { FC } from "../types";
 import { LOADING_MESSAGES, LOADING_MESSAGE_INTERVAL_MS } from "../../config";
+import { createDivContainer } from "./helpers";
 
 const LoaderComp: FC = () => {
   const [loadingMessage, setLoadingMessage] = useState<string | null>(null);
@@ -49,12 +50,8 @@ const LoaderComp: FC = () => {
 
 export const Loader = memo(LoaderComp);
 
-const Container: FC = ({ children }) => (
-  <div className="flex items-center justify-center w-full max-w-lg h-96">
-    {children}
-  </div>
+const Container = createDivContainer(
+  "flex items-center justify-center w-full max-w-lg h-96"
 );
 
-const LoadingMessage: FC = ({ children }) => (
-  <div className="text-xl text-white">{children}</div>
-);
+const LoadingMessage = createDivContainer("text-xl text-white");

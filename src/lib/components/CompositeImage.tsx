@@ -1,5 +1,6 @@
 import { forwardRef, memo, useLayoutEffect, useRef, useState } from "react";
 import { DivProps, FC, FRC, ImgProps } from "../types";
+import { createDivContainer } from "./helpers";
 
 type CompositeImageProps = {
   imgSrc: string;
@@ -62,10 +63,10 @@ const CompositeComp: FC<CompositeProps> = ({
     >
       {containerWidth != null && (
         <>
-          <ImageContainer widthPercentage={position}>
+          <ImageContainer style={{ width: `${position}%` }}>
             <Image style={{ width: containerWidth }} src={imgSrcLeft} />
           </ImageContainer>
-          <ImageContainer widthPercentage={100 - position}>
+          <ImageContainer style={{ width: `${100 - position}%` }}>
             <Image
               style={{
                 width: containerWidth,
@@ -82,9 +83,7 @@ const CompositeComp: FC<CompositeProps> = ({
 
 const Composite = memo(CompositeComp);
 
-const Container: FC = ({ children }) => (
-  <div className="w-full max-w-lg flex flex-col">{children}</div>
-);
+const Container = createDivContainer("w-full max-w-lg flex flex-col");
 
 const CompositeContainer: FRC<HTMLDivElement, DivProps> = forwardRef(
   ({ children, ...divProps }, ref) => (
@@ -94,21 +93,7 @@ const CompositeContainer: FRC<HTMLDivElement, DivProps> = forwardRef(
   )
 );
 
-type ImageContainerProps = {
-  widthPercentage: number;
-};
-
-const ImageContainer: FC<ImageContainerProps> = ({
-  widthPercentage,
-  children,
-}) => (
-  <div
-    className={`overflow-hidden shrink-0 relative`}
-    style={{ width: `${widthPercentage}%` }}
-  >
-    {children}
-  </div>
-);
+const ImageContainer = createDivContainer(`overflow-hidden shrink-0 relative`);
 
 type SliderProps = {
   value: number;
