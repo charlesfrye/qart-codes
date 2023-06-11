@@ -2,5 +2,4 @@
 
 ## Frontend
 
-- Light/dark mode
-- Styling
+## Backend
