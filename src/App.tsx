@@ -19,7 +19,7 @@ function App() {
     const dataURL = await generateQRCodeDataURL();
 
     // TODO: fetch from backend
-    await wait(5000);
+    // await wait(5000);
 
     setQRCodeDataURL(dataURL);
     setLoading(false);

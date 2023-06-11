@@ -1,5 +1,5 @@
 import { forwardRef, memo, useLayoutEffect, useRef, useState } from "react";
-import { FC, FRC, ImgProps } from "../types";
+import { DivProps, FC, FRC, ImgProps } from "../types";
 
 type CompositeImageProps = {
   imgSrc: string;
@@ -48,7 +48,10 @@ const CompositeComp: FC<CompositeProps> = ({
   }, []);
 
   return (
-    <CompositeContainer ref={containerRef}>
+    <CompositeContainer
+      ref={containerRef}
+      style={{ height: containerWidth ?? 0 }}
+    >
       {containerWidth != null && (
         <>
           <ImageContainer widthPercentage={position}>
@@ -58,7 +61,7 @@ const CompositeComp: FC<CompositeProps> = ({
             <Image
               style={{
                 width: containerWidth,
-                transform: `translateX(-${position}%)`,
+                right: 0,
               }}
               src={imgSrcRight}
             />
@@ -75,9 +78,9 @@ const Container: FC = ({ children }) => (
   <div className="w-full max-w-lg">{children}</div>
 );
 
-const CompositeContainer: FRC<HTMLDivElement> = forwardRef(
-  ({ children }, ref) => (
-    <div className="flex" ref={ref}>
+const CompositeContainer: FRC<HTMLDivElement, DivProps> = forwardRef(
+  ({ children, ...divProps }, ref) => (
+    <div className="flex justify-between" ref={ref} {...divProps}>
       {children}
     </div>
   )
@@ -92,7 +95,7 @@ const ImageContainer: FC<ImageContainerProps> = ({
   children,
 }) => (
   <div
-    className={`overflow-hidden shrink-0`}
+    className={`overflow-hidden shrink-0 relative`}
     style={{ width: `${widthPercentage}%` }}
   >
     {children}
@@ -114,5 +117,5 @@ const Slider: FC<SliderProps> = ({ value, onChange }) => (
 );
 
 const Image: FC<ImgProps> = ({ ...imgProps }) => (
-  <img className="max-w-none aspect-square" {...imgProps} />
+  <img className="max-w-none aspect-square absolute" {...imgProps} />
 );
