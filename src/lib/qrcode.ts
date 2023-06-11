@@ -1,9 +1,11 @@
 import QRCode from "qrcode";
 import { BACKEND_URL } from "../config";
 
-export async function generateQRCodeDataURL(): Promise<string | null> {
+export async function generateQRCodeDataURL(
+  str: string
+): Promise<string | null> {
   try {
-    const res = await QRCode.toDataURL("I am a pony!");
+    const res = await QRCode.toDataURL(str);
     return res;
   } catch (err) {
     console.error(`Error generating QR code: ${err}`);

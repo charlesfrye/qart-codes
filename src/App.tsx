@@ -26,7 +26,7 @@ function App() {
 
     setLoading(true);
 
-    const dataURL = await generateQRCodeDataURL();
+    const dataURL = await generateQRCodeDataURL(qrCodeValue);
 
     // TODO: fetch from backend
     const generatedSrc = await generateImage();
