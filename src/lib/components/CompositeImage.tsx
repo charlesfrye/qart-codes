@@ -82,10 +82,6 @@ const Container: FC = ({ children }) => (
   <div className="w-full max-w-lg">{children}</div>
 );
 
-const CompositeContainer: FC = ({ children }) => (
-  <div className="relative flex">{children}</div>
-);
-
 type ImageContainerProps = {
   widthPercentage: number;
 };
