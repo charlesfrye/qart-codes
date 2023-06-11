@@ -55,5 +55,5 @@ const Container: FC = ({ children }) => (
 );
 
 const LoadingMessage: FC = ({ children }) => (
-  <div className="text-xl">{children}</div>
+  <div className="text-xl text-white">{children}</div>
 );

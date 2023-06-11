@@ -84,7 +84,7 @@ function App() {
 export default App;
 
 const Container: FC<DivProps> = ({ children }) => (
-  <div className="h-full flex flex-col items-center justify-center p-4 bg-blue">
+  <div className="min-h-full flex flex-col items-center justify-center p-4 bg-blue">
     {children}
   </div>
 );
