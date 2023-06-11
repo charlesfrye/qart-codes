@@ -1,4 +1,3 @@
-// import { wait } from "@laxels/utils";
 import { useCallback, useState } from "react";
 import { CompositeImage } from "./lib/components/CompositeImage";
 import { Loader } from "./lib/components/Loader";
@@ -116,28 +115,3 @@ const ResultsContainer: FC<DivProps> = ({ children }) => (
 const DownloadButtons: FC = ({ children }) => (
   <div className="">{children}</div>
 );
-
-// const Container: FC = ({ children }) => (
-//   <div className="w-full">{children}</div>
-// );
-// const Container: FC = ({ children }) => (
-//   <div className="w-full">{children}</div>
-// );
-// const Container: FC = ({ children }) => (
-//   <div className="w-full">{children}</div>
-// );
-// const Container: FC = ({ children }) => (
-//   <div className="w-full">{children}</div>
-// );
-// const Container: FC = ({ children }) => (
-//   <div className="w-full">{children}</div>
-// );
-// const Container: FC = ({ children }) => (
-//   <div className="w-full">{children}</div>
-// );
-// const Container: FC = ({ children }) => (
-//   <div className="w-full">{children}</div>
-// );
-// const Container: FC = ({ children }) => (
-//   <div className="w-full">{children}</div>
-// );

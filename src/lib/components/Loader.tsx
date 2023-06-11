@@ -26,6 +26,7 @@ const LoaderComp: FC = () => {
         return;
       }
 
+      // TODO: this is so dumb
       while (true) {
         const i = _.random(0, LOADING_MESSAGES.length - 1);
         const m = LOADING_MESSAGES[i];
