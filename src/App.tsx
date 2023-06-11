@@ -10,15 +10,21 @@ import { CompositeImage } from "./lib/components/CompositeImage";
 import { generateQRCodeDataURL } from "./lib/qrcode";
 import { FC } from "./lib/types";
 import { downloadImage } from "./lib/download";
+import { wait } from "@laxels/utils";
+import { Loader } from "./lib/components/Loader";
 
 function App() {
   const [prompt, setPrompt] = useState(``);
   const [qrCodeValue, setQRCodeValue] = useState(``);
   const [qrCodeDataURL, setQRCodeDataURL] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const generate = useCallback(async () => {
+    setLoading(true);
+    await wait(5000);
     const dataURL = await generateQRCodeDataURL();
     setQRCodeDataURL(dataURL);
+    setLoading(false);
   }, []);
 
   const downloadQRCode = useCallback(async () => {
@@ -53,6 +59,7 @@ function App() {
         />
         <Button onClick={generate}>GENERATE</Button>
       </UserInput>
+      {loading && <Loader />}
       {qrCodeDataURL && (
         <>
           <CompositeImage
