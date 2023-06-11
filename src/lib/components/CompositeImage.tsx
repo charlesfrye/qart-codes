@@ -83,7 +83,7 @@ const CompositeComp: FC<CompositeProps> = ({
 const Composite = memo(CompositeComp);
 
 const Container: FC = ({ children }) => (
-  <div className="w-full max-w-lg">{children}</div>
+  <div className="w-full max-w-lg flex flex-col">{children}</div>
 );
 
 const CompositeContainer: FRC<HTMLDivElement, DivProps> = forwardRef(
@@ -118,7 +118,7 @@ type SliderProps = {
 const Slider: FC<SliderProps> = ({ value, onChange }) => (
   <input
     type="range"
-    className="w-full"
+    className="w-full mt-4"
     value={value}
     onChange={(e) => onChange(Number(e.target.value))}
   />

@@ -1,16 +1,16 @@
-import { wait } from "@laxels/utils";
+// import { wait } from "@laxels/utils";
 import { useCallback, useState } from "react";
-import { PLACEHOLDER_IMAGE_URL } from "./config";
 import { CompositeImage } from "./lib/components/CompositeImage";
 import { Loader } from "./lib/components/Loader";
 import { downloadImage } from "./lib/download";
-import { generateQRCodeDataURL } from "./lib/qrcode";
+import { generateImage, generateQRCodeDataURL } from "./lib/qrcode";
 import { ButtonProps, DivProps, FC, FormProps, InputProps } from "./lib/types";
 
 function App() {
   const [prompt, setPrompt] = useState(``);
   const [qrCodeValue, setQRCodeValue] = useState(``);
   const [qrCodeDataURL, setQRCodeDataURL] = useState<string | null>(null);
+  const [imgSrc, setImgSrc] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const generate = useCallback(async () => {
@@ -19,9 +19,10 @@ function App() {
     const dataURL = await generateQRCodeDataURL();
 
     // TODO: fetch from backend
-    // await wait(5000);
+    const generatedSrc = await generateImage();
 
     setQRCodeDataURL(dataURL);
+    setImgSrc(generatedSrc);
     setLoading(false);
   }, []);
 
@@ -36,11 +37,14 @@ function App() {
   }, [qrCodeDataURL]);
 
   const downloadGeneratedImage = useCallback(async () => {
+    if (!imgSrc) {
+      return;
+    }
     await downloadImage({
-      url: PLACEHOLDER_IMAGE_URL,
+      url: imgSrc,
       fileName: `image`,
     });
-  }, []);
+  }, [imgSrc]);
 
   return (
     <Container>
@@ -56,21 +60,22 @@ function App() {
           onChange={(e) => setQRCodeValue(e.target.value)}
         />
         <Button disabled={loading} onClick={generate}>
-          GENERATE
+          Generate
         </Button>
       </UserInput>
-      {loading && <Loader />}
-      {qrCodeDataURL && (
-        <>
-          <CompositeImage
-            imgSrc={PLACEHOLDER_IMAGE_URL}
-            qrCodeDataURL={qrCodeDataURL}
-          />
-          <DownloadButtons>
-            <Button onClick={downloadQRCode}>Download QR Code</Button>
-            <Button onClick={downloadGeneratedImage}>Download image</Button>
-          </DownloadButtons>
-        </>
+      {(loading || (imgSrc && qrCodeDataURL)) && (
+        <ResultsContainer>
+          {loading && <Loader />}
+          {imgSrc && qrCodeDataURL && (
+            <>
+              <CompositeImage imgSrc={imgSrc} qrCodeDataURL={qrCodeDataURL} />
+              <DownloadButtons>
+                <Button onClick={downloadQRCode}>Download QR Code</Button>
+                <Button onClick={downloadGeneratedImage}>Download image</Button>
+              </DownloadButtons>
+            </>
+          )}
+        </ResultsContainer>
       )}
     </Container>
   );
@@ -79,7 +84,7 @@ function App() {
 export default App;
 
 const Container: FC<DivProps> = ({ children }) => (
-  <div className="h-full flex flex-col items-center justify-center p-4">
+  <div className="h-full flex flex-col items-center justify-center p-4 bg-blue">
     {children}
   </div>
 );
@@ -92,16 +97,20 @@ const UserInput: FC<FormProps> = ({ children }) => (
 
 const Input: FC<InputProps> = ({ ...inputProps }) => (
   <input
-    className="w-full border border-gray-500 rounded py-2 px-4 mt-4 first:mt-0"
+    className="w-full border border-gray-500 rounded-xl py-2.5 px-8 mt-4 first:mt-0"
     {...inputProps}
   />
 );
 
 const Button: FC<ButtonProps> = ({ ...buttonProps }) => (
   <button
-    className="w-full mt-4 disabled:bg-gray-300 bg-blue-600 text-white rounded py-2 px-4"
+    className="w-full mt-4 disabled:bg-gray-300 bg-orange hover:bg-orange-light text-white rounded-xl py-2.5 px-8 transition-colors font-bold"
     {...buttonProps}
   />
+);
+
+const ResultsContainer: FC<DivProps> = ({ children }) => (
+  <div className="mt-16">{children}</div>
 );
 
 const DownloadButtons: FC = ({ children }) => (
