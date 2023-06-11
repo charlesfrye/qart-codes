@@ -40,11 +40,19 @@ const CompositeComp: FC<CompositeProps> = ({
   const [containerWidth, setContainerWidth] = useState<number | null>(null);
 
   useLayoutEffect(() => {
-    const containerEl = containerRef.current;
-    if (containerEl == null) {
-      return;
+    updateContainerWidth();
+    window.addEventListener(`resize`, updateContainerWidth);
+    return () => {
+      window.removeEventListener(`resize`, updateContainerWidth);
+    };
+
+    function updateContainerWidth(): void {
+      const containerEl = containerRef.current;
+      if (containerEl == null) {
+        return;
+      }
+      setContainerWidth(containerEl.clientWidth);
     }
-    setContainerWidth(containerEl.clientWidth);
   }, []);
 
   return (
