@@ -1,35 +1,85 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import {
+  ButtonHTMLAttributes,
+  DetailedHTMLProps,
+  InputHTMLAttributes,
+  useCallback,
+  useState,
+} from "react";
+import { PLACEHOLDER_IMAGE_URL } from "./config";
+import { CompositeImage } from "./lib/components/CompositeImage";
+import { generateQRCodeDataURL } from "./lib/qrcode";
+import { FC } from "./lib/types";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [prompt, setPrompt] = useState(``);
+  const [qrCodeValue, setQRCodeValue] = useState(``);
+  const [qrCodeDataURL, setQRCodeDataURL] = useState<string | null>(null);
+
+  const generate = useCallback(async () => {
+    const dataURL = await generateQRCodeDataURL();
+    setQRCodeDataURL(dataURL);
+  }, []);
 
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <Container>
+      <Input
+        placeholder={`Image prompt`}
+        value={prompt}
+        onChange={(e) => setPrompt(e.target.value)}
+      />
+      <Input
+        placeholder={`QR Code value`}
+        value={qrCodeValue}
+        onChange={(e) => setQRCodeValue(e.target.value)}
+      />
+      <Button onClick={generate}>GENERATE</Button>
+      {qrCodeDataURL && (
+        <CompositeImage
+          imgSrc={PLACEHOLDER_IMAGE_URL}
+          qrCodeDataURL={qrCodeDataURL}
+        />
+      )}
+    </Container>
+  );
 }
 
-export default App
+export default App;
+
+const Container: FC = ({ children }) => (
+  <div className="h-full flex flex-col items-center justify-center">
+    {children}
+  </div>
+);
+
+const Input: FC<
+  DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>
+> = ({ ...inputProps }) => <input className="w-full" {...inputProps} />;
+
+const Button: FC<
+  DetailedHTMLProps<ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement>
+> = ({ ...buttonProps }) => <button className="w-full" {...buttonProps} />;
+
+// const Container: FC = ({ children }) => (
+//   <div className="w-full">{children}</div>
+// );
+// const Container: FC = ({ children }) => (
+//   <div className="w-full">{children}</div>
+// );
+// const Container: FC = ({ children }) => (
+//   <div className="w-full">{children}</div>
+// );
+// const Container: FC = ({ children }) => (
+//   <div className="w-full">{children}</div>
+// );
+// const Container: FC = ({ children }) => (
+//   <div className="w-full">{children}</div>
+// );
+// const Container: FC = ({ children }) => (
+//   <div className="w-full">{children}</div>
+// );
+// const Container: FC = ({ children }) => (
+//   <div className="w-full">{children}</div>
+// );
+// const Container: FC = ({ children }) => (
+//   <div className="w-full">{children}</div>
+// );
