@@ -309,6 +309,20 @@ class Model:
 
         self.pipe = controller
 
+    @staticmethod
+    def resize_for_condition_image(input_image, resolution: int = 512):
+        import PIL.Image
+
+        input_image = input_image.convert("RGB")
+        W, H = input_image.size
+        k = float(resolution) / min(H, W)
+        H *= k
+        W *= k
+        H = int(round(H / 64.0)) * 64
+        W = int(round(W / 64.0)) * 64
+        img = input_image.resize((W, H), resample=PIL.Image.LANCZOS)
+        return img
+
     @method()
     def generate(self, text, input_image):
         import base64
@@ -322,9 +336,10 @@ class Model:
             input_image = input_image.split("base64,")[1]
         input_image = PIL.Image.open(io.BytesIO(base64.b64decode(input_image)))
         input_image = input_image.resize((512, 512), resample=PIL.Image.LANCZOS)
+        tile_input_image = self.resize_for_condition_image(input_image)
         output_image = self.pipe(
             text,
-            image=[input_image, input_image],
+            image=[input_image, tile_input_image],
             num_inference_steps=self.config.num_inference_steps,
             controlnet_conditioning_scale=self.config.controlnet_conditioning_scale,
             guidance_scale=self.config.guidance_scale,
