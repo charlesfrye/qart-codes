@@ -33,7 +33,6 @@ function App() {
       return;
     }
 
-    // TODO: fetch from backend
     const generatedSrc = await generateImage(prompt, dataURL);
     if (!generatedSrc) {
       toast(`Ah geez, something borked. Try again, it'll probably be faster!`);
