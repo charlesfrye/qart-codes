@@ -258,9 +258,9 @@ inference_image = (
 class InferenceConfig:
     """Configuration information for inference."""
 
-    num_inference_steps: int = 50
-    controlnet_conditioning_scale = [0.45, 0.3]
-    guidance_scale: int = 6
+    num_inference_steps: int = 100
+    controlnet_conditioning_scale = [0.45, 0.25]
+    guidance_scale: int = 9
 
 
 @stub.cls(
@@ -316,6 +316,10 @@ class Model:
 
         import PIL.Image
 
+        print(input_image[:10])
+        print(input_image[-10:])
+        if "base64," in input_image:
+            input_image = input_image.split("base64,")[1]
         input_image = PIL.Image.open(io.BytesIO(base64.b64decode(input_image)))
         input_image = input_image.resize((512, 512), resample=PIL.Image.LANCZOS)
         output_image = self.pipe(
