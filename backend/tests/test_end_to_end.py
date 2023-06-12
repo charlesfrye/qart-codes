@@ -1,3 +1,4 @@
+import subprocess
 import time
 
 import requests
@@ -19,6 +20,7 @@ def test_end_to_end():
     )
     result.raise_for_status()
     job_id = result.json()["job_id"]
+    print(f"job_id: {job_id}")
 
     status = result.json()["status"]
     while status in ["PENDING", "RUNNING"]:
@@ -31,3 +33,15 @@ def test_end_to_end():
 
     result = requests.get(job_route + f"/{job_id}")
     result.raise_for_status()
+
+    subprocess.check_output(
+        [
+            "modal",
+            "volume",
+            "get",
+            "--force",
+            "qart-results-vol",
+            job_id.replace("-", "/") + "/qr.png",
+            f"tests/{job_id}-qr.png",
+        ]
+    )
