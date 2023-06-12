@@ -28,8 +28,17 @@ function App() {
 
     const dataURL = await generateQRCodeDataURL(qrCodeValue);
 
+    if (!dataURL) {
+      console.error("error generating QR code")
+      return;
+    }
+
     // TODO: fetch from backend
-    const generatedSrc = await generateImage();
+    const generatedSrc = await generateImage(prompt, dataURL);
+    if (!dataURL) {
+      toast(`Ah geez, something borked. Try again, it'll probably be faster!`);
+      return;
+    }
 
     setQRCodeDataURL(dataURL);
     setImgSrc(generatedSrc);
