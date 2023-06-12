@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-
 from typing import Optional
 
 from fastapi import FastAPI
@@ -9,7 +8,7 @@ from fastapi.exceptions import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 import modal
-from modal import Dict, Image, Mount, SharedVolume, Stub, asgi_app, method
+from modal import Dict, Image, Mount, Secret, SharedVolume, Stub, asgi_app, method
 from pydantic import BaseModel
 import toml
 
@@ -19,9 +18,9 @@ toml_file_path = Path("pyproject.toml")
 ROOT_DIR = Path("/") / "root"
 ASSETS_DIR = ROOT_DIR / "assets"
 RESULTS_DIR = ROOT_DIR / "results"
-MODELS_DIR = ROOT_DIR / "models"
+MODELS_DIR = ROOT_DIR / ".cache" / "huggingface"
 
-model_volume = SharedVolume().persist("qart-models-vol")
+model_volume = SharedVolume(cloud="aws").persist("qart-models-vol")
 results_volume = SharedVolume().persist("qart-results-vol")
 
 
@@ -38,7 +37,6 @@ with open(toml_file_path, "r") as toml_file:
 info = pyproject["tool"]["poetry"]
 
 api_image = Image.debian_slim().pip_install("wonderwords", "Pillow")
-inference_image = Image.debian_slim().pip_install("smart_open", "Pillow")
 
 stub = Stub("qart", image=api_image, mounts=[toml_file_mount, assets_mount])
 
@@ -102,7 +100,7 @@ class JobStatusResponse(BaseModel):
         schema_extra = {"example": {"job_id": "_test", "status": JobStatus.COMPLETE}}
 
 
-@stub.function(timeout=45, shared_volumes={RESULTS_DIR: results_volume})
+@stub.function(timeout=150, shared_volumes={RESULTS_DIR: results_volume}, keep_warm=1)
 def generate_and_save(job_id: str, prompt: str, image: str):
     """Generate a QR code from a prompt and save it to a file."""
     try:
@@ -118,7 +116,7 @@ def generate_and_save(job_id: str, prompt: str, image: str):
 
     # await the result
     try:
-        generator_response = call.get(timeout=30)
+        generator_response = call.get(timeout=60)
     except TimeoutError as e:
         _set_status(job_id, JobStatus.FAILED)
         stub.app.jobs[job_id]["error"] = e
@@ -130,9 +128,7 @@ def generate_and_save(job_id: str, prompt: str, image: str):
     _set_status(job_id, JobStatus.COMPLETE)
 
 
-@stub.function(
-    shared_volumes={RESULTS_DIR: results_volume},
-)
+@stub.function(shared_volumes={RESULTS_DIR: results_volume}, keep_warm=1)
 @asgi_app()
 def api():
     api_backend = FastAPI(
@@ -242,27 +238,76 @@ def api():
     return api_backend
 
 
+inference_image = (
+    Image.debian_slim(python_version="3.10")
+    .pip_install(
+        "accelerate",
+        "datasets",
+        "diffusers",
+        "Pillow",
+        "torch",
+        "transformers",
+        "triton",
+        "xformers",
+    )
+    .apt_install("ffmpeg", "libsm6", "libxext6")
+)
+
+
 @dataclass
 class InferenceConfig:
     """Configuration information for inference."""
 
     num_inference_steps: int = 50
-    guidance_scale: float = 7.5
+    controlnet_conditioning_scale = [0.45, 0.3]
+    guidance_scale: int = 6
 
 
 @stub.cls(
     image=inference_image,
-    gpu="A100",
+    gpu="A10G",
     shared_volumes={str(MODELS_DIR): model_volume},
+    secret=Secret.from_name("huggingface"),
+    cloud="aws",
 )
 class Model:
     config = InferenceConfig()
 
     def __enter__(self):
-        def fake_pipe(text, image, **kwargs):
-            return {"images": [image]}
+        import os
 
-        self.pipe = fake_pipe
+        from accelerate.utils import write_basic_config
+        import huggingface_hub
+        from diffusers import ControlNetModel, StableDiffusionControlNetPipeline
+        import torch
+
+        write_basic_config(mixed_precision="fp16")
+
+        hf_key = os.environ["HUGGINGFACE_TOKEN"]
+        os.environ["HUGGINGFACE_CACHE"] = str(MODELS_DIR)
+        huggingface_hub.login(hf_key)
+
+        brightness_controlnet = ControlNetModel.from_pretrained(
+            "ioclab/control_v1p_sd15_brightness", torch_dtype=torch.float16
+        )
+
+        tile_controlnet = ControlNetModel.from_pretrained(
+            "lllyasviel/control_v11f1e_sd15_tile",
+            torch_dtype=torch.float16,
+            use_safetensors=False,
+        )
+
+        controller = StableDiffusionControlNetPipeline.from_pretrained(
+            "Lykon/DreamShaper",
+            controlnet=[brightness_controlnet, tile_controlnet],
+            torch_dtype=torch.float16,
+            use_safetensors=False,
+            safety_checker=None,
+        ).to("cuda")
+
+        controller.enable_xformers_memory_efficient_attention()
+
+        self.pipe = controller
 
     @method()
     def generate(self, text, input_image):
@@ -272,10 +317,12 @@ class Model:
         import PIL.Image
 
         input_image = PIL.Image.open(io.BytesIO(base64.b64decode(input_image)))
+        input_image = input_image.resize((512, 512), resample=PIL.Image.LANCZOS)
         output_image = self.pipe(
             text,
-            input_image,
+            image=[input_image, input_image],
             num_inference_steps=self.config.num_inference_steps,
+            controlnet_conditioning_scale=self.config.controlnet_conditioning_scale,
             guidance_scale=self.config.guidance_scale,
         )["images"][0]
 
@@ -283,7 +330,6 @@ class Model:
 
 
 def _get_status(job_id: str) -> JobStatus:
-    print(f"{job_id} getting status")
     try:
         state = stub.app.jobs.get(job_id)
         return state["status"]
@@ -301,7 +347,7 @@ def _set_status(job_id: str, status: JobStatus):
 
 def _path_from_job_id(job_id: str) -> Path:
     if job_id == "_test":
-        return ASSETS_DIR / "qr.png"
+        return ASSETS_DIR / "qart.png"
     else:
         parts = job_id.split("-")
         result_path = Path(RESULTS_DIR, *parts) / "qr.png"
