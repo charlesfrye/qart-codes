@@ -4,6 +4,7 @@ export const PLACEHOLDER_IMAGE_URL = `https://images.fineartamerica.com/images/a
 
 export const LOADING_MESSAGES = [
   `Compositing QR code...`,
+  `Responding Quickly...`,
   `Generating image...`,
   `Diffusing (but stably)...`,
   `Cold booting (brr)...`,
@@ -20,7 +21,7 @@ export const LOADING_MESSAGES = [
   `Logging personal data to Grafana "on accident"...`,
   `Violating the GDPR and the Geneva Convention...`,
   `Scrolling through the terms of service...`,
-  `Publishing in ICLR...`,
+  `Publishing in ICQR...`,
   `Hugging some faces...`,
   `Synthesizing aesthetics...`,
   `Inventing new colors...`,
