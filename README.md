@@ -18,3 +18,6 @@
 - run a sweep over hyperparameters to pick good defaults
 - find a way to change the start/stop time, as in the WebUI
 - deliver the results directly from the stub
+
+## Skunkworks
+- write a natural language interface
