@@ -128,7 +128,7 @@ def generate_and_save(job_id: str, prompt: str, image: str):
     _set_status(job_id, JobStatus.COMPLETE)
 
 
-@stub.function(shared_volumes={RESULTS_DIR: results_volume}, keep_warm=1)
+@stub.function(shared_volumes={RESULTS_DIR: results_volume}, keep_warm=10, container_idle_timeout=60)
 @asgi_app()
 def api():
     api_backend = FastAPI(
@@ -270,6 +270,7 @@ class InferenceConfig:
     secret=Secret.from_name("huggingface"),
     cloud="aws",
     keep_warm=1,
+    container_idle_timeout=120,
 )
 class Model:
     config = InferenceConfig()
