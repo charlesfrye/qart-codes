@@ -24,6 +24,11 @@ function App() {
       return;
     }
 
+    if (qrCodeValue.length > 25 && !localStorage.getItem('warnedAboutLongQRCode')) {
+      localStorage.setItem('warnedAboutLongQRCode', 'true');
+      toast.warn(`Yo, Q-Art Codes work better with shorter text. Try a URL shortener, leave off http and www. KISS!`);
+    }
+
     setLoading(true);
 
     const dataURL = await generateQRCodeDataURL(qrCodeValue);
