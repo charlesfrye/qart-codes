@@ -1,14 +1,14 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useRef, useEffect } from "react";
 import { toast } from "react-toastify";
 import { CompositeImage } from "./lib/components/CompositeImage";
 import { Loader } from "./lib/components/Loader";
 import { createDivContainer } from "./lib/components/helpers";
 import { downloadImage } from "./lib/download";
 import { generateImage, generateQRCodeDataURL } from "./lib/qrcode";
-import { ButtonProps, FC, FormProps, InputProps } from "./lib/types";
+import { ButtonProps, FC, FormProps, InputProps, TextareaProps } from "./lib/types";
 
 function App() {
-  const [prompt, setPrompt] = useState(`fireworks`);
+  const [prompt, setPrompt] = useState(`fireworks, beautiful display above a city, breathtaking spectacle, fiery, shimmering, symphonic, cascading`);
   const [qrCodeValue, setQRCodeValue] = useState(`tfs.ai/qr-main`);
   const [qrCodeDataURL, setQRCodeDataURL] = useState<string | null>(null);
   const [imgSrc, setImgSrc] = useState<string | null>(null);
@@ -16,11 +16,11 @@ function App() {
 
   const generate = useCallback(async () => {
     if (!prompt) {
-      toast(`Please insert a valid prompt`);
+      toast(`Please enter a text prompt`);
       return;
     }
     if (!qrCodeValue) {
-      toast(`Please insert a valid QR code value`);
+      toast(`Please enter a QR code value`);
       return;
     }
 
@@ -67,7 +67,7 @@ function App() {
   return (
     <Container>
       <UserInput>
-        <Input
+        <Textarea
           placeholder={`Visual content or style to apply to the QR code`}
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
@@ -115,6 +115,25 @@ const Input: FC<InputProps> = ({ ...inputProps }) => (
     {...inputProps}
   />
 );
+
+const Textarea: FC<TextareaProps> = ({ ...inputProps }) => {
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (textAreaRef.current) {
+      textAreaRef.current.style.height = "auto";
+      textAreaRef.current.style.height = `${textAreaRef.current.scrollHeight}px`;
+    }
+  }, [inputProps.value]);
+
+  return (
+    <textarea
+      ref={textAreaRef}
+      className="w-full border border-gray-500 rounded-xl py-2.5 px-8 mt-4 first:mt-0 focus:outline-none resize-none overflow-hidden max-h-60"
+      {...inputProps}
+    />
+  );
+};
 
 const Button: FC<ButtonProps> = ({ ...buttonProps }) => (
   <button
