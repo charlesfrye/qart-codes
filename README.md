@@ -10,6 +10,8 @@
 - Toast to warn users who enter long QR codes (>25 characters) that it's not likely to work
 - Allow downloading mixed QR/QaRt codes, based on slider
 - "Verify scan" button
+- Route for prompt + qr, and opengraph images for those routes
+  - as part of sharing features
 
 ## Backend
 - prepare to allow more config params from users

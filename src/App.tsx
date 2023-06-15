@@ -34,6 +34,7 @@ function App() {
     }
 
     const generatedSrc = await generateImage(prompt, dataURL);
+    setLoading(false);
     if (!generatedSrc) {
       toast(`Ah geez, something borked. Try again, it'll probably be faster!`);
       return;
@@ -41,7 +42,6 @@ function App() {
 
     setQRCodeDataURL(dataURL);
     setImgSrc(generatedSrc);
-    setLoading(false);
   }, [prompt, qrCodeValue]);
 
   const downloadQRCode = useCallback(async () => {
