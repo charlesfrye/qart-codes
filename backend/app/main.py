@@ -12,8 +12,6 @@ from modal import Dict, Image, Mount, Secret, SharedVolume, Stub, asgi_app, meth
 from pydantic import BaseModel
 import toml
 
-# Specify the path to your pyproject.toml file
-toml_file_path = Path("pyproject.toml")
 
 ROOT_DIR = Path("/") / "root"
 ASSETS_DIR = ROOT_DIR / "assets"
@@ -24,6 +22,7 @@ model_volume = SharedVolume(cloud="aws").persist("qart-models-vol")
 results_volume = SharedVolume().persist("qart-results-vol")
 
 
+toml_file_path = Path("pyproject.toml")
 toml_file_mount = Mount.from_local_file(
     local_path=toml_file_path, remote_path=ROOT_DIR / toml_file_path
 )
