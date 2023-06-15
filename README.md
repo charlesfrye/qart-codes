@@ -4,13 +4,11 @@
 - Cancel button
 - More parameters: "Negative Prompt" and two sliders: "QR code < -- > Art" "Quick & Dirty < -- > Slow & Purdy"
 - Show a gallery of examples while people are waiting?
-- Better starting text, to show users what to do
-  - Randomly choose a prompt from a set of nice ones
-  - Randomly choose QR text between the short link, the GitHub repo, Rickroll, etc
+- Randomly choose a prompt from a set of nice ones
+- Randomly choose QR text between the short link, the GitHub repo, Rickroll, etc
 - Prompt (and negative prompt) should be short-form/textbox, QR code can stay single-line
 - Toast to warn users who enter long QR codes (>25 characters) that it's not likely to work
 - Allow downloading mixed QR/QaRt codes
-- Clarify "vanilla"/"basic" QR code in download button
 
 ## Backend
 - prepare to allow more config params from users
