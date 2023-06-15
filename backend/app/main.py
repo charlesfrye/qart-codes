@@ -12,8 +12,6 @@ from modal import Dict, Image, Mount, Secret, SharedVolume, Stub, asgi_app, meth
 from pydantic import BaseModel
 import toml
 
-# Specify the path to your pyproject.toml file
-toml_file_path = Path("pyproject.toml")
 
 ROOT_DIR = Path("/") / "root"
 ASSETS_DIR = ROOT_DIR / "assets"
@@ -24,6 +22,7 @@ model_volume = SharedVolume(cloud="aws").persist("qart-models-vol")
 results_volume = SharedVolume().persist("qart-results-vol")
 
 
+toml_file_path = Path("pyproject.toml")
 toml_file_mount = Mount.from_local_file(
     local_path=toml_file_path, remote_path=ROOT_DIR / toml_file_path
 )
@@ -128,7 +127,7 @@ def generate_and_save(job_id: str, prompt: str, image: str):
     _set_status(job_id, JobStatus.COMPLETE)
 
 
-@stub.function(shared_volumes={RESULTS_DIR: results_volume}, keep_warm=1)
+@stub.function(shared_volumes={RESULTS_DIR: results_volume}, keep_warm=10, container_idle_timeout=60)
 @asgi_app()
 def api():
     api_backend = FastAPI(
@@ -270,6 +269,7 @@ class InferenceConfig:
     secret=Secret.from_name("huggingface"),
     cloud="aws",
     keep_warm=1,
+    container_idle_timeout=120,
 )
 class Model:
     config = InferenceConfig()

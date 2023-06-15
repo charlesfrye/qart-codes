@@ -8,6 +8,7 @@ import {
   PropsWithChildren,
   FC as ReactFC,
   forwardRef,
+  TextareaHTMLAttributes,
 } from "react";
 
 export type FC<Props = object> = ReactFC<PropsWithChildren<Props>>;
@@ -39,4 +40,9 @@ export type InputProps = DetailedHTMLProps<
 export type ButtonProps = DetailedHTMLProps<
   ButtonHTMLAttributes<HTMLButtonElement>,
   HTMLButtonElement
+>;
+
+export type TextareaProps = DetailedHTMLProps<
+  TextareaHTMLAttributes<HTMLTextAreaElement>,
+  HTMLTextAreaElement
 >;
