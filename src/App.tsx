@@ -8,8 +8,8 @@ import { generateImage, generateQRCodeDataURL } from "./lib/qrcode";
 import { ButtonProps, FC, FormProps, InputProps } from "./lib/types";
 
 function App() {
-  const [prompt, setPrompt] = useState(``);
-  const [qrCodeValue, setQRCodeValue] = useState(``);
+  const [prompt, setPrompt] = useState(`fireworks`);
+  const [qrCodeValue, setQRCodeValue] = useState(`tfs.ai/qr-main`);
   const [qrCodeDataURL, setQRCodeDataURL] = useState<string | null>(null);
   const [imgSrc, setImgSrc] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -54,7 +54,7 @@ function App() {
     });
   }, [qrCodeDataURL]);
 
-  const downloadGeneratedImage = useCallback(async () => {
+  const downloadQArtCode = useCallback(async () => {
     if (!imgSrc) {
       return;
     }
@@ -68,17 +68,17 @@ function App() {
     <Container>
       <UserInput>
         <Input
-          placeholder={`Image prompt`}
+          placeholder={`Visual content or style to apply to the QR code`}
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
         />
         <Input
-          placeholder={`QR Code value`}
+          placeholder={`Text to encode, like a URL or your wifi password`}
           value={qrCodeValue}
           onChange={(e) => setQRCodeValue(e.target.value)}
         />
         <Button disabled={loading} onClick={generate}>
-          Generate
+          Generate Q-Art Code
         </Button>
       </UserInput>
       {(loading || (imgSrc && qrCodeDataURL)) && (
@@ -88,8 +88,8 @@ function App() {
             <>
               <CompositeImage imgSrc={imgSrc} qrCodeDataURL={qrCodeDataURL} />
               <DownloadButtons>
+                <Button onClick={downloadQArtCode}>Download Q-Art Code</Button>
                 <Button onClick={downloadQRCode}>Download QR Code</Button>
-                <Button onClick={downloadGeneratedImage}>Download image</Button>
               </DownloadButtons>
             </>
           )}

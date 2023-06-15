@@ -4,7 +4,7 @@ export const PLACEHOLDER_IMAGE_URL = `https://images.fineartamerica.com/images/a
 
 export const LOADING_MESSAGES = [
   `Compositing QR code...`,
-  `Responding Quickly...`,
+  `"Quick Response" more like "Slow Response"...`,
   `Generating image...`,
   `Diffusing (but stably)...`,
   `Cold booting (brr)...`,
@@ -17,9 +17,9 @@ export const LOADING_MESSAGES = [
   `Mining XMR in your browser...`,
   `Fiddling with hyperparameters...`,
   `Deserializing data so we can serialize it again...`,
-  `Looking up which way the KL Divergence goes...`,
-  `Logging personal data to Grafana "on accident"...`,
-  `Violating the GDPR and the Geneva Convention...`,
+  `Looking up which way KL Divergence goes...`,
+  `Logging user data to Grafana "on accident"...`,
+  `Violating GDPR and Geneva Conventions...`,
   `Scrolling through the terms of service...`,
   `Publishing in ICQR...`,
   `Hugging some faces...`,
