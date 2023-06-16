@@ -1,7 +1,15 @@
-import { forwardRef, memo, useLayoutEffect, useRef, useState } from "react";
+import {
+  forwardRef,
+  memo,
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { DivProps, FC, FRC, ImgProps } from "../types";
 import { createDivContainer } from "./helpers";
 import { IconDownload } from "./svg/IconDownload";
+import { downloadStitchedImage } from "../download";
 
 type CompositeImageProps = {
   imgSrc: string;
@@ -57,6 +65,10 @@ const CompositeComp: FC<CompositeProps> = ({
     }
   }, []);
 
+  const downloadStitched = useCallback(async () => {
+    await downloadStitchedImage(imgSrcLeft, imgSrcRight, position / 100);
+  }, [imgSrcLeft, imgSrcRight, position]);
+
   return (
     <CompositeContainer
       ref={containerRef}
@@ -78,7 +90,7 @@ const CompositeComp: FC<CompositeProps> = ({
           </ImageContainer>
         </>
       )}
-      <DownloadOverlay>
+      <DownloadOverlay onClick={downloadStitched}>
         <IconDownloadContainer>
           <IconDownload />
         </IconDownloadContainer>
