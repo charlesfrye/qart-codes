@@ -1,6 +1,15 @@
-import { forwardRef, memo, useLayoutEffect, useRef, useState } from "react";
+import {
+  forwardRef,
+  memo,
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { DivProps, FC, FRC, ImgProps } from "../types";
 import { createDivContainer } from "./helpers";
+import { IconDownload } from "./svg/IconDownload";
+import { downloadStitchedImage } from "../download";
 
 type CompositeImageProps = {
   imgSrc: string;
@@ -56,6 +65,10 @@ const CompositeComp: FC<CompositeProps> = ({
     }
   }, []);
 
+  const downloadStitched = useCallback(async () => {
+    await downloadStitchedImage(imgSrcLeft, imgSrcRight, position / 100);
+  }, [imgSrcLeft, imgSrcRight, position]);
+
   return (
     <CompositeContainer
       ref={containerRef}
@@ -77,20 +90,33 @@ const CompositeComp: FC<CompositeProps> = ({
           </ImageContainer>
         </>
       )}
+      <DownloadOverlay onClick={downloadStitched}>
+        <IconDownloadContainer>
+          <IconDownload />
+        </IconDownloadContainer>
+      </DownloadOverlay>
     </CompositeContainer>
   );
 };
 
 const Composite = memo(CompositeComp);
 
-const Container = createDivContainer("w-full max-w-lg flex flex-col");
+const Container = createDivContainer(`flex flex-col`);
 
 const CompositeContainer: FRC<HTMLDivElement, DivProps> = forwardRef(
   ({ children, ...divProps }, ref) => (
-    <div className="flex justify-between" ref={ref} {...divProps}>
+    <div className="relative flex justify-between" ref={ref} {...divProps}>
       {children}
     </div>
   )
+);
+
+const DownloadOverlay = createDivContainer(
+  `absolute inset-0 bg-black bg-opacity-25 z-10 cursor-pointer transition-opacity opacity-0 hover:opacity-100`
+);
+
+const IconDownloadContainer = createDivContainer(
+  `w-8 h-8 top-4 right-4 absolute text-white`
 );
 
 const ImageContainer = createDivContainer(`overflow-hidden shrink-0 relative`);
