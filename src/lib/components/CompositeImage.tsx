@@ -101,7 +101,7 @@ const CompositeComp: FC<CompositeProps> = ({
 
 const Composite = memo(CompositeComp);
 
-const Container = createDivContainer("w-full max-w-[512px] flex flex-col");
+const Container = createDivContainer(`flex flex-col`);
 
 const CompositeContainer: FRC<HTMLDivElement, DivProps> = forwardRef(
   ({ children, ...divProps }, ref) => (

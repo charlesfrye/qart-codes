@@ -208,6 +208,6 @@ const Button: FC<ButtonProps> = ({ ...buttonProps }) => (
   />
 );
 
-const ResultsContainer = createDivContainer("mt-16");
+const ResultsContainer = createDivContainer(`mt-16 w-full max-w-[512px]`);
 
 const DownloadButtons = createDivContainer(``);
