@@ -63,26 +63,43 @@ function App() {
       return;
     }
 
+    const handleGenerationFailure = (waitingTime: number) => {
+      const waitColdBoot = 60_000;  // typical waiting time when backend hits a cold boot
+      let message = "Ah geez, something borked. Try again.";
+      if (waitingTime >= waitColdBoot) {
+        message += " It'll probably be faster!";
+      }
+      toast(message);
+      setLoading(false);
+    };
+
     const jobID = await startGeneration(prompt, dataURL);
     if (!jobID) {
-      toast(`Ah geez, something borked. Try again, it'll probably be faster!`);
-      setLoading(false);
+      handleGenerationFailure(-1);
       return;
     }
     setJobID(jobID);
 
-    while (true) {
-      await wait(1000);
+    const start = Date.now();
+    let waitingTime = 0;
+    const maxWaiting = 300_000; // set defensively high, backend should timeout first
+    let waitedTooLong = false
+    while (!waitedTooLong) {
+      const pollInterval = 1_000;
+      await wait(pollInterval);
       if (cancelledRef.current) {
         break;
       }
 
       const { status, result } = await pollGeneration(jobID);
+      waitingTime = Date.now() - start;
+
+      if (waitingTime >= maxWaiting) {
+        waitedTooLong = true;
+      }
 
       if (status === `FAILED`) {
-        toast(
-          `Ah geez, something borked. Try again, it'll probably be faster!`
-        );
+        handleGenerationFailure(waitingTime);
         break;
       }
 
@@ -92,7 +109,9 @@ function App() {
         break;
       }
     }
-
+    if (waitedTooLong) {
+      handleGenerationFailure(waitingTime);
+    }
     setLoading(false);
   }, [prompt, qrCodeValue]);
 
