@@ -83,8 +83,9 @@ function App() {
     const start = Date.now();
     let waitingTime = 0;
     const maxWaiting = 300_000; // set defensively high, backend should timeout first
-    const pollInterval = 1_000;
-    while (waitingTime < maxWaiting) {
+    let waitedTooLong = false
+    while (!waitedTooLong) {
+      const pollInterval = 1_000;
       await wait(pollInterval);
       if (cancelledRef.current) {
         break;
@@ -92,6 +93,10 @@ function App() {
 
       const { status, result } = await pollGeneration(jobID);
       waitingTime = Date.now() - start;
+
+      if (waitingTime >= maxWaiting) {
+        waitedTooLong = true;
+      }
 
       if (status === `FAILED`) {
         handleGenerationFailure(waitingTime);
@@ -104,8 +109,10 @@ function App() {
         break;
       }
     }
-
-    handleGenerationFailure(waitingTime);
+    if (waitedTooLong) {
+      handleGenerationFailure(waitingTime);
+    }
+    setLoading(false);
   }, [prompt, qrCodeValue]);
 
   const cancel = useCallback(async () => {
