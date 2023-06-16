@@ -1,5 +1,7 @@
 export const BACKEND_URL = `https://charlesfrye--qart-api.modal.run`;
 
+export const QR_CODE_DIMENSIONS = 512;
+
 export const PLACEHOLDER_IMAGE_URL = `https://images.fineartamerica.com/images/artworkimages/mediumlarge/3/okami-amaterasu-two-milford-martin.jpg`;
 
 export const LOADING_MESSAGES = [

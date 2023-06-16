@@ -1,9 +1,17 @@
 import QRCode from "qrcode";
-import { BACKEND_URL } from "../config";
+import { BACKEND_URL, QR_CODE_DIMENSIONS } from "../config";
+
+type QRCodeOptions = QRCode.QRCodeOptions & {
+  // Missing properties in the type definition
+  width?: number;
+};
 
 export async function generateQRCodeDataURL(
   str: string,
-  options: QRCode.QRCodeOptions = { errorCorrectionLevel: "H" }
+  options: QRCodeOptions = {
+    errorCorrectionLevel: "H",
+    width: QR_CODE_DIMENSIONS,
+  }
 ): Promise<string | null> {
   try {
     const res = await QRCode.toDataURL(str, options);

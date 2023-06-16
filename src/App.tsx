@@ -3,7 +3,7 @@ import { toast } from "react-toastify";
 import { CompositeImage } from "./lib/components/CompositeImage";
 import { Loader } from "./lib/components/Loader";
 import { createDivContainer } from "./lib/components/helpers";
-import { downloadImage } from "./lib/download";
+import { downloadImage, downloadStitchedImage } from "./lib/download";
 import {
   cancelGeneration,
   startGeneration,
@@ -126,6 +126,13 @@ function App() {
     });
   }, [imgSrc]);
 
+  const downloadStitched = useCallback(async () => {
+    if (!qrCodeDataURL || !imgSrc) {
+      return;
+    }
+    await downloadStitchedImage(qrCodeDataURL, imgSrc, 0.5);
+  }, [qrCodeDataURL, imgSrc]);
+
   return (
     <Container>
       <UserInput>
@@ -156,6 +163,7 @@ function App() {
               <DownloadButtons>
                 <Button onClick={downloadQArtCode}>Download Q-Art Code</Button>
                 <Button onClick={downloadQRCode}>Download QR Code</Button>
+                <Button onClick={downloadStitched}>Download Stitched</Button>
               </DownloadButtons>
             </>
           )}
