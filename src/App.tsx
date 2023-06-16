@@ -4,15 +4,33 @@ import { CompositeImage } from "./lib/components/CompositeImage";
 import { Loader } from "./lib/components/Loader";
 import { createDivContainer } from "./lib/components/helpers";
 import { downloadImage } from "./lib/download";
-import { generateImage, generateQRCodeDataURL } from "./lib/qrcode";
-import { ButtonProps, FC, FormProps, InputProps, TextareaProps } from "./lib/types";
+import {
+  cancelGeneration,
+  startGeneration,
+  generateQRCodeDataURL,
+  pollGeneration,
+} from "./lib/qrcode";
+import {
+  ButtonProps,
+  FC,
+  FormProps,
+  InputProps,
+  TextareaProps,
+} from "./lib/types";
+import { wait } from "@laxels/utils";
 
 function App() {
-  const [prompt, setPrompt] = useState(`fireworks, beautiful display above a city, breathtaking spectacle, fiery, shimmering, symphonic, cascading`);
+  const [prompt, setPrompt] = useState(
+    `fireworks, beautiful display above a city, breathtaking spectacle, fiery, shimmering, symphonic, cascading`
+  );
   const [qrCodeValue, setQRCodeValue] = useState(`tfs.ai/qr-main`);
+
+  const [loading, setLoading] = useState(false);
+  const [jobID, setJobID] = useState<string | null>(null);
+  const cancelledRef = useRef(false);
+
   const [qrCodeDataURL, setQRCodeDataURL] = useState<string | null>(null);
   const [imgSrc, setImgSrc] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
   const generate = useCallback(async () => {
     if (!prompt) {
@@ -24,30 +42,69 @@ function App() {
       return;
     }
 
-    if (qrCodeValue.length > 25 && !localStorage.getItem('warnedAboutLongQRCode')) {
-      localStorage.setItem('warnedAboutLongQRCode', 'true');
-      toast.warn(`Yo, Q-Art Codes work better with shorter text. Try a URL shortener, leave off http and www. KISS!`);
+    if (
+      qrCodeValue.length > 25 &&
+      !localStorage.getItem("warnedAboutLongQRCode")
+    ) {
+      localStorage.setItem("warnedAboutLongQRCode", "true");
+      toast.warn(
+        `Yo, Q-Art Codes work better with shorter text. Try a URL shortener, leave off http and www. KISS!`
+      );
     }
 
     setLoading(true);
+    cancelledRef.current = false;
 
     const dataURL = await generateQRCodeDataURL(qrCodeValue);
 
     if (!dataURL) {
-      console.error("error generating QR code")
+      console.error("error generating QR code");
+      setLoading(false);
       return;
     }
 
-    const generatedSrc = await generateImage(prompt, dataURL);
-    setLoading(false);
-    if (!generatedSrc) {
+    const jobID = await startGeneration(prompt, dataURL);
+    if (!jobID) {
       toast(`Ah geez, something borked. Try again, it'll probably be faster!`);
+      setLoading(false);
       return;
     }
+    setJobID(jobID);
 
-    setQRCodeDataURL(dataURL);
-    setImgSrc(generatedSrc);
+    while (true) {
+      await wait(1000);
+      if (cancelledRef.current) {
+        break;
+      }
+
+      const { status, result } = await pollGeneration(jobID);
+
+      if (status === `FAILED`) {
+        toast(
+          `Ah geez, something borked. Try again, it'll probably be faster!`
+        );
+        break;
+      }
+
+      if (status === `COMPLETE` && result) {
+        setQRCodeDataURL(dataURL);
+        setImgSrc(result);
+        break;
+      }
+    }
+
+    setLoading(false);
   }, [prompt, qrCodeValue]);
+
+  const cancel = useCallback(async () => {
+    if (!loading || !jobID) {
+      return;
+    }
+    cancelGeneration(jobID);
+    setJobID(null);
+    setLoading(false);
+    cancelledRef.current = true;
+  }, [loading, jobID]);
 
   const downloadQRCode = useCallback(async () => {
     if (!qrCodeDataURL) {
@@ -82,9 +139,13 @@ function App() {
           value={qrCodeValue}
           onChange={(e) => setQRCodeValue(e.target.value)}
         />
-        <Button disabled={loading} onClick={generate}>
-          Generate Q-Art Code
-        </Button>
+        {!loading ? (
+          <Button disabled={loading} onClick={generate}>
+            Generate Q-Art Code
+          </Button>
+        ) : (
+          <Button onClick={cancel}>Cancel Generation</Button>
+        )}
       </UserInput>
       {(loading || (imgSrc && qrCodeDataURL)) && (
         <ResultsContainer>
