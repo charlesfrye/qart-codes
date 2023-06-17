@@ -29,7 +29,7 @@ export const LOADING_MESSAGES = [
   `Inventing new colors...`,
   `Rewriting the codebase with ChatGPT...`,
   `Whispering to the bits and bytes...`,
-  `Rolling out with the Transfomers...`,
+  `Rolling out with the Transformers...`,
   `Taking a GANder...`,
   `Rolling the art dice...`,
   `Torching a pie...`,
