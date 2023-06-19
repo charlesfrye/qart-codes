@@ -41,11 +41,13 @@ modal-token: environment ## creates token ID and secret for authentication with 
 	@echo "###"
 
 environment: ## sets up the environment
-	poetry lock
-	poetry install --without=dev
+	poetry install --without=dev --sync
 
 dev-environment: environment ## sets up the environment for development
-	poetry install
+	poetry install --sync
+
+poetry-update: ## updates the poetry.lock file
+	poetry update --lock
 
 banner: ## prints the logo in the terminal
 	@cat assets/logo
