@@ -22,7 +22,13 @@ export async function generateQRCodeDataURL(
   return null;
 }
 
-type JobStatus = `NOT_STARTED` | `PENDING` | `RUNNING` | `COMPLETE` | `CANCELLED` | `FAILED`;
+type JobStatus =
+  | `NOT_STARTED`
+  | `PENDING`
+  | `RUNNING`
+  | `COMPLETE`
+  | `CANCELLED`
+  | `FAILED`;
 
 export async function startGeneration(
   prompt: string,

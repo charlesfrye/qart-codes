@@ -64,7 +64,7 @@ function App() {
     }
 
     const handleGenerationFailure = (waitingTime: number) => {
-      const waitColdBoot = 60_000;  // typical waiting time when backend hits a cold boot
+      const waitColdBoot = 60_000; // typical waiting time when backend hits a cold boot
       let message = "Ah geez, something borked. Try again.";
       if (waitingTime >= waitColdBoot) {
         message += " It'll probably be faster!";
@@ -83,7 +83,7 @@ function App() {
     const start = Date.now();
     let waitingTime = 0;
     const maxWaiting = 300_000; // set defensively high, backend should timeout first
-    let waitedTooLong = false
+    let waitedTooLong = false;
     while (!waitedTooLong) {
       const pollInterval = 1_000;
       await wait(pollInterval);
