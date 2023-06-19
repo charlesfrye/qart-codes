@@ -41,7 +41,7 @@ modal-token: environment ## creates token ID and secret for authentication with 
 	@echo "###"
 
 environment: ## sets up the environment
-	poetry install --without=dev --sync
+	poetry install --without=dev
 
 dev-environment: environment ## sets up the environment for development
 	poetry install --sync
