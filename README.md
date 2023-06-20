@@ -1,7 +1,6 @@
 # TODOs
 
 ## Frontend
-- Cancel button
 - More parameters: "Negative Prompt" and two sliders: "QR code < -- > Art" "Quick & Dirty < -- > Slow & Purdy"
   - awaiting backend changes; this is a @charlesfrye todo
 - Improve the default state/user nudging
@@ -9,7 +8,6 @@
   - Randomly choose QR text between the short link, the GitHub repo, Rickroll, etc
 - "Verify scan" button
   - This is a @charlesfrye todo, part of the MLOps improvements
-- Allow downloading mixed QR/QaRt codes, based on slider
 - Route for prompt + qr, and opengraph images for those routes
   - as part of sharing features
 
