@@ -10,11 +10,6 @@ from .generator import Model
 
 if modal.is_local:
     stub.jobs = Dict({"_test": {"status": JobStatus.COMPLETE}})
-    with open(Path("assets") / "qr-dataurl.txt") as f:
-        test_qr_dataurl = f.read()
-else:
-    with open(ASSETS_DIR / "qr-dataurl.txt") as f:
-        test_qr_dataurl = f.read()
 
 
 def start(job_id: str, request: JobRequest):
