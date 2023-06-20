@@ -108,15 +108,22 @@ class Model:
         print(input_image[-10:])
         if "base64," in input_image:
             input_image = input_image.split("base64,")[1]
-        input_image = PIL.Image.open(io.BytesIO(base64.b64decode(input_image)))
+        input_image = PIL.Image.open(io.BytesIO(base64.b64decode(input_image))).convert(
+            "RGB"
+        )
         input_image = input_image.resize((512, 512), resample=PIL.Image.LANCZOS)
         tile_input_image = self.resize_for_condition_image(input_image)
         output_image = self.pipe(
             text,
             image=[input_image, tile_input_image],
+            height=512,
+            width=512,
             num_inference_steps=self.config.num_inference_steps,
             controlnet_conditioning_scale=self.config.controlnet_conditioning_scale,
             guidance_scale=self.config.guidance_scale,
         )["images"][0]
+
+        # blend the input QR code with the output image to improve scanability
+        output_image = PIL.Image.blend(input_image, output_image, 0.95)
 
         return output_image
