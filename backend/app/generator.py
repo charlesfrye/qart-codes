@@ -124,6 +124,6 @@ class Model:
         )["images"][0]
 
         # blend the input QR code with the output image to improve scanability
-        output_image = PIL.Image.blend(input_image, output_image, 0.95)
+        output_image = PIL.Image.blend(input_image, output_image, 0.9)
 
         return output_image
