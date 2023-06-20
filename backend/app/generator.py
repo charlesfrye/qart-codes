@@ -1,4 +1,4 @@
-"""Text-conditioned generative  model of QR code images."""
+"""Text-conditioned generative model of QR code images."""
 from dataclasses import dataclass
 
 from modal import Image, Secret, SharedVolume, method

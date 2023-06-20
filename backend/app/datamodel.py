@@ -4,6 +4,8 @@ from typing import Optional
 
 from pydantic import BaseModel
 
+from .common import test_qr_dataurl
+
 
 class HealthResponse(BaseModel):
     status: str
@@ -38,13 +40,13 @@ class JobRequest(BaseModel):
     prompt: str
     image: ImagePayload
 
-    # class Config:
-    #     schema_extra = {
-    #         "example": {
-    #             "prompt": "a Shiba Inu drinking an Americano and eating pancakes",
-    #             "image": ImagePayload(image_data=test_qr_dataurl),
-    #         }
-    #     }
+    class Config:
+        schema_extra = {
+            "example": {
+                "prompt": "a Shiba Inu drinking an Americano and eating pancakes",
+                "image": ImagePayload(image_data=test_qr_dataurl),
+            }
+        }
 
 
 class JobStatusResponse(BaseModel):
