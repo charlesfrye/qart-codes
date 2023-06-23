@@ -37,7 +37,7 @@ class InferenceConfig:
 
 @stub.cls(
     image=inference_image,
-    gpu="A10G",
+    gpu="any",
     shared_volumes={str(MODELS_DIR): model_volume},
     secret=Secret.from_name("huggingface"),
     cloud="aws",
