@@ -64,7 +64,7 @@ function App() {
     }
 
     const handleGenerationFailure = (waitingTime: number) => {
-      const waitColdBoot = 60_000; // typical waiting time when backend hits a cold boot
+      const waitColdBoot = 90_000; // typical waiting time when backend hits a cold boot
       let message = "Ah geez, something borked. Try again.";
       if (waitingTime >= waitColdBoot) {
         message += " It'll probably be faster!";
