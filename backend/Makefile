@@ -23,8 +23,8 @@ help: banner ## get a list of all the targets, plus short descriptions
 
 app: modal-auth ## deploy the application on Modal
 		$(if $(filter prod, $(value ENV)),\
-			poetry run modal deploy app/main.py, \
-      poetry run modal serve app/main.py \
+			poetry run modal deploy --env=main app/main.py, \
+      poetry run modal serve --env=main app/main.py \
 		)
 
 modal-auth: environment ## authenticates to Modal
