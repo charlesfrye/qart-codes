@@ -30,7 +30,7 @@ inference_image = (
 class InferenceConfig:
     """Configuration information for inference."""
 
-    num_inference_steps: int = 100
+    num_inference_steps: int = 50
     controlnet_conditioning_scale = [0.45, 0.25]
     guidance_scale: int = 9
 
