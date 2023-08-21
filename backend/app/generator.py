@@ -41,7 +41,7 @@ class InferenceConfig:
     shared_volumes={str(MODELS_DIR): model_volume},
     secret=Secret.from_name("huggingface"),
     cloud="aws",
-    keep_warm=0,
+    keep_warm=1,
     container_idle_timeout=1200,
 )
 class Model:
