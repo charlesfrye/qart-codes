@@ -633,25 +633,12 @@ files = [
 
 [[package]]
 name = "modal"
-version = "0.50.2636"
-description = "Dummy alias that requires modal-client"
-optional = false
-python-versions = "*"
-files = [
-    {file = "modal-0.50.2636-py3-none-any.whl", hash = "sha256:f3ad48cba6161475abe67bc9ac1f5ebd61c7f8a6e1da8e6709af7b3f2eb82aa6"},
-]
-
-[package.dependencies]
-modal-client = "0.50.2636"
-
-[[package]]
-name = "modal-client"
-version = "0.50.2636"
+version = "0.55.3898"
 description = "Python client library for Modal"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "modal_client-0.50.2636-py3-none-any.whl", hash = "sha256:b9ad82257a7916fe7c691713c1bf50a3740c196fd02a7f6d6be8e0ed7a6e52ce"},
+    {file = "modal-0.55.3898-py3-none-any.whl", hash = "sha256:91a6f7967a46486346de564416a480942b7716952ee1629a806d1ff34f45c467"},
 ]
 
 [package.dependencies]
@@ -667,7 +654,7 @@ cloudpickle = [
 fastapi = "*"
 grpclib = "0.4.3"
 importlib-metadata = ">=3.6.0"
-protobuf = ">=3.19,<5.0"
+protobuf = ">=3.19,<4.24.0 || >4.24.0,<5.0"
 rich = ">=12.0.0"
 synchronicity = ">=0.5.3,<0.6.0"
 tblib = ">=1.7.0"
@@ -675,7 +662,7 @@ toml = "*"
 typer = ">=0.9.0,<0.10.0"
 types-certifi = "*"
 types-toml = "*"
-typing-extensions = ">=4.6.3,<4.7.0"
+typing-extensions = ">=4.6,<5.0"
 watchfiles = "*"
 
 [[package]]
@@ -1381,4 +1368,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "84efa098c1104920748784645cf319cb0ed5a6d9946c84064cfdc84c65db00ce"
+content-hash = "dcfb340201fffd372ebde8551e4fb14c22179a8f3bc9a8a8427c2755812719fd"
