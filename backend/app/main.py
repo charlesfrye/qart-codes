@@ -8,7 +8,7 @@ from .common import toml_file_path
 
 
 @stub.function(
-    shared_volumes={RESULTS_DIR: results_volume},
+    network_file_systems={RESULTS_DIR: results_volume},
     keep_warm=10,
     container_idle_timeout=60,
 )

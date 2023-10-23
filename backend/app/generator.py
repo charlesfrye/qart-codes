@@ -1,14 +1,14 @@
 """Text-conditioned generative model of QR code images."""
 from dataclasses import dataclass
 
-from modal import Image, Secret, SharedVolume, method
+from modal import Image, Secret, NetworkFileSystem, method
 
 from .common import ROOT_DIR
 from .common import stub
 
 MODELS_DIR = ROOT_DIR / ".cache" / "huggingface"
 
-model_volume = SharedVolume(cloud="aws").persist("qart-models-vol")
+model_volume = NetworkFileSystem.persisted("qart-models-vol", cloud="aws")
 
 inference_image = (
     Image.debian_slim(python_version="3.10")
@@ -38,7 +38,7 @@ class InferenceConfig:
 @stub.cls(
     image=inference_image,
     gpu="T4",
-    shared_volumes={str(MODELS_DIR): model_volume},
+    network_file_systems={str(MODELS_DIR): model_volume},
     secret=Secret.from_name("huggingface"),
     cloud="aws",
     keep_warm=0,

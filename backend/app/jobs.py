@@ -9,7 +9,7 @@ from .datamodel import JobStatus, JobRequest
 from .generator import Model
 
 if modal.is_local:
-    stub.jobs = Dict({"_test": {"status": JobStatus.COMPLETE}})
+    stub.jobs = Dict.new({"_test": {"status": JobStatus.COMPLETE}})
 
 
 def start(job_id: str, request: JobRequest):
@@ -17,11 +17,11 @@ def start(job_id: str, request: JobRequest):
         if job_id == "_test":
             return
         else:
-            stub.app.jobs.put(job_id, {"status": JobStatus.PENDING, "handle": None})
+            stub.jobs.put(job_id, {"status": JobStatus.PENDING, "handle": None})
             call = generate_and_save.spawn(
                 job_id, request.prompt, request.image.image_data
             )
-            stub.app.jobs.put(job_id, {"status": JobStatus.PENDING, "handle": call})
+            stub.jobs.put(job_id, {"status": JobStatus.PENDING, "handle": call})
 
     except Exception as e:
         print(e)
@@ -45,7 +45,9 @@ def read(job_id: str):
     return path
 
 
-@stub.function(timeout=150, shared_volumes={RESULTS_DIR: results_volume}, keep_warm=1)
+@stub.function(
+    timeout=150, network_file_systems={RESULTS_DIR: results_volume}, keep_warm=1
+)
 def generate_and_save(job_id: str, prompt: str, image: str):
     """Generate a QR code from a prompt and save it to a file."""
     try:
@@ -56,15 +58,15 @@ def generate_and_save(job_id: str, prompt: str, image: str):
         set_status(job_id, JobStatus.RUNNING)
     except Exception as e:
         set_status(job_id, JobStatus.FAILED)
-        stub.app.jobs[job_id]["error"] = e
+        stub.jobs[job_id]["error"] = e
         return
 
     # await the result
     try:
-        generator_response = call.get(timeout=60)
+        generator_response = call.get(timeout=90)
     except TimeoutError as e:
         set_status(job_id, JobStatus.FAILED)
-        stub.app.jobs[job_id]["error"] = e
+        stub.jobs[job_id]["error"] = e
         return
 
     # write the result to a file
@@ -89,7 +91,7 @@ def path_from_job_id(job_id: str) -> Path:
 
 def get_status(job_id: str) -> JobStatus:
     try:
-        state = stub.app.jobs.get(job_id)
+        state = stub.jobs.get(job_id)
         return state["status"]
     except KeyError:
         print(job_id)
@@ -98,6 +100,6 @@ def get_status(job_id: str) -> JobStatus:
 
 def set_status(job_id: str, status: JobStatus):
     print(f"{job_id} setting status to {status}")
-    state = stub.app.jobs.pop(job_id)
+    state = stub.jobs.pop(job_id)
     state["status"] = status
-    stub.app.jobs.put(job_id, state)
+    stub.jobs.put(job_id, state)

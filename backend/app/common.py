@@ -2,7 +2,7 @@
 from pathlib import Path
 
 import modal
-from modal import Image, Mount, SharedVolume, Stub
+from modal import Image, Mount, NetworkFileSystem, Stub
 
 ROOT_DIR = Path("/") / "root"
 ASSETS_DIR = ROOT_DIR / "assets"
@@ -15,7 +15,7 @@ toml_file_mount = Mount.from_local_file(
 
 assets_mount = Mount.from_local_dir(local_path=Path("assets"), remote_path=ASSETS_DIR)
 
-results_volume = SharedVolume().persist("qart-results-vol")
+results_volume = NetworkFileSystem.persisted("qart-results-vol")
 
 image = Image.debian_slim().pip_install("wonderwords", "Pillow")
 stub = Stub("qart", image=image, mounts=[toml_file_mount, assets_mount])
