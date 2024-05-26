@@ -2,23 +2,24 @@
 from pathlib import Path
 
 import modal
-from modal import Image, Mount, NetworkFileSystem, Stub
 
 ROOT_DIR = Path("/") / "root"
 ASSETS_DIR = ROOT_DIR / "assets"
 RESULTS_DIR = ROOT_DIR / "results"
 
 toml_file_path = Path("pyproject.toml")
-toml_file_mount = Mount.from_local_file(
+toml_file_mount = modal.Mount.from_local_file(
     local_path=toml_file_path, remote_path=ROOT_DIR / toml_file_path
 )
 
-assets_mount = Mount.from_local_dir(local_path=Path("assets"), remote_path=ASSETS_DIR)
+assets_mount = modal.Mount.from_local_dir(
+    local_path=Path("assets"), remote_path=ASSETS_DIR
+)
 
-results_volume = NetworkFileSystem.persisted("qart-results-vol")
+results_volume = modal.NetworkFileSystem.from_name("qart-results-vol")
 
-image = Image.debian_slim().pip_install("wonderwords", "Pillow")
-stub = Stub("qart", image=image, mounts=[toml_file_mount, assets_mount])
+image = modal.Image.debian_slim().pip_install("wonderwords", "Pillow")
+app = modal.App("qart", image=image, mounts=[toml_file_mount, assets_mount])
 
 if modal.is_local:
     with open(Path("assets") / "qr-dataurl.txt") as f:

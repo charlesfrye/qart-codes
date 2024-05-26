@@ -7,17 +7,3 @@ homepage = "https://tfs.ai/qart"
 repository = "https://github.com/charlesfrye/qart-codes/backend"
 authors = ["Charles Frye <cfrye59@gmail.com>"]
 readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "^3.10"
-modal = "^0.55.3898"
-
-[tool.poetry.group.dev.dependencies]
-ruff = "^0.0.272"
-black = "^23.3.0"
-pytest = "^7.3.2"
-requests = "^2.31.0"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"

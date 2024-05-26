@@ -3,11 +3,11 @@ import toml
 
 from .api import create as create_api
 from .common import RESULTS_DIR, results_volume
-from .common import stub
+from .common import app
 from .common import toml_file_path
 
 
-@stub.function(
+@app.function(
     network_file_systems={RESULTS_DIR: results_volume},
     keep_warm=10,
     container_idle_timeout=60,

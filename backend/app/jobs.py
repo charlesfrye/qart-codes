@@ -3,13 +3,17 @@ from pathlib import Path
 import modal
 from modal import Dict
 
-from .common import stub
+from .common import app
 from .common import ASSETS_DIR, RESULTS_DIR, results_volume
 from .datamodel import JobStatus, JobRequest
 from .generator import Model
 
 if modal.is_local:
-    stub.jobs = Dict.new({"_test": {"status": JobStatus.COMPLETE}})
+    jobs = Dict.from_name(
+        "qart-codes-test-jobs",
+        {"_test": {"status": JobStatus.COMPLETE}},
+        create_if_missing=True,
+    )
 
 
 def start(job_id: str, request: JobRequest):
@@ -17,11 +21,11 @@ def start(job_id: str, request: JobRequest):
         if job_id == "_test":
             return
         else:
-            stub.jobs.put(job_id, {"status": JobStatus.PENDING, "handle": None})
+            jobs.put(job_id, {"status": JobStatus.PENDING, "handle": None})
             call = generate_and_save.spawn(
                 job_id, request.prompt, request.image.image_data
             )
-            stub.jobs.put(job_id, {"status": JobStatus.PENDING, "handle": call})
+            jobs.put(job_id, {"status": JobStatus.PENDING, "handle": call})
 
     except Exception as e:
         print(e)
@@ -45,7 +49,7 @@ def read(job_id: str):
     return path
 
 
-@stub.function(
+@app.function(
     timeout=150, network_file_systems={RESULTS_DIR: results_volume}, keep_warm=1
 )
 def generate_and_save(job_id: str, prompt: str, image: str):
@@ -58,7 +62,7 @@ def generate_and_save(job_id: str, prompt: str, image: str):
         set_status(job_id, JobStatus.RUNNING)
     except Exception as e:
         set_status(job_id, JobStatus.FAILED)
-        stub.jobs[job_id]["error"] = e
+        jobs[job_id]["error"] = e
         return
 
     # await the result
@@ -66,7 +70,7 @@ def generate_and_save(job_id: str, prompt: str, image: str):
         generator_response = call.get(timeout=90)
     except TimeoutError as e:
         set_status(job_id, JobStatus.FAILED)
-        stub.jobs[job_id]["error"] = e
+        jobs[job_id]["error"] = e
         return
 
     # write the result to a file
@@ -91,7 +95,7 @@ def path_from_job_id(job_id: str) -> Path:
 
 def get_status(job_id: str) -> JobStatus:
     try:
-        state = stub.jobs.get(job_id)
+        state = jobs.get(job_id)
         return state["status"]
     except KeyError:
         print(job_id)
@@ -100,6 +104,6 @@ def get_status(job_id: str) -> JobStatus:
 
 def set_status(job_id: str, status: JobStatus):
     print(f"{job_id} setting status to {status}")
-    state = stub.jobs.pop(job_id)
+    state = jobs.pop(job_id)
     state["status"] = status
-    stub.jobs.put(job_id, state)
+    jobs.put(job_id, state)

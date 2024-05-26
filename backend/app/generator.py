@@ -1,17 +1,17 @@
 """Text-conditioned generative model of QR code images."""
 from dataclasses import dataclass
 
-from modal import Image, Secret, NetworkFileSystem, method
+import modal
 
 from .common import ROOT_DIR
-from .common import stub
+from .common import app
 
 MODELS_DIR = ROOT_DIR / ".cache" / "huggingface"
 
-model_volume = NetworkFileSystem.persisted("qart-models-vol", cloud="aws")
+model_volume = modal.NetworkFileSystem.from_name("qart-models-vol")
 
 inference_image = (
-    Image.debian_slim(python_version="3.10")
+    modal.Image.debian_slim(python_version="3.10")
     .pip_install(
         "accelerate",
         "datasets",
@@ -35,19 +35,20 @@ class InferenceConfig:
     guidance_scale: int = 9
 
 
-@stub.cls(
+@app.cls(
     image=inference_image,
-    gpu="T4",
+    gpu="a10g",
     network_file_systems={str(MODELS_DIR): model_volume},
-    secret=Secret.from_name("huggingface"),
-    cloud="aws",
-    keep_warm=0,
+    secrets=[modal.Secret.from_name("huggingface")],
+    keep_warm=1,
     container_idle_timeout=1200,
+    allow_concurrent_inputs=10,
 )
 class Model:
     config = InferenceConfig()
 
-    def __enter__(self):
+    @modal.enter()
+    def start(self):
         import os
 
         from accelerate.utils import write_basic_config
@@ -97,7 +98,7 @@ class Model:
         img = input_image.resize((W, H), resample=PIL.Image.LANCZOS)
         return img
 
-    @method()
+    @modal.method()
     def generate(self, text, input_image):
         import base64
         import io

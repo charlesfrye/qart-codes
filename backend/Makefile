@@ -23,31 +23,31 @@ help: banner ## get a list of all the targets, plus short descriptions
 
 app: modal-auth ## deploy the application on Modal
 		$(if $(filter prod, $(value ENV)),\
-			poetry run modal deploy --env=main app/main.py, \
-      poetry run modal serve --env=main app/main.py \
+			modal deploy app.main, \
+      modal serve app.main \
 		)
+
+tests: modal-auth dev-environment ## run the tests (you'll need to run modal serve too)
+	pytest -rP
 
 modal-auth: environment ## authenticates to Modal
 	@$(if $(value MODAL_TOKEN_ID),, \
 		$(error MODAL_TOKEN_ID is not set. Please set it before running this target.))
 	@$(if $(value MODAL_TOKEN_SECRET),, \
 		$(error MODAL_TOKEN_SECRET is not set. Please set it before running this target.))
-	@poetry run modal token set --token-id $(MODAL_TOKEN_ID) --token-secret $(MODAL_TOKEN_SECRET)
+	@modal token set --token-id $(MODAL_TOKEN_ID) --token-secret $(MODAL_TOKEN_SECRET)
 
 modal-token: environment ## creates token ID and secret for authentication with modal
-	poetry run modal token new
+	modal token new
 	@echo "###"
 	@echo "# Copy the token info from the file mentioned above into a .env file"
 	@echo "###"
 
 environment: ## sets up the environment
-	poetry install --without=dev
+	pip install -r requirements.txt
 
 dev-environment: environment ## sets up the environment for development
-	poetry install --sync
-
-poetry-update: ## updates the poetry.lock file
-	poetry update --lock
+	pip install -r requirements.dev.txt
 
 banner: ## prints the logo in the terminal
 	@cat assets/logo

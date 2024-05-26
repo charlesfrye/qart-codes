@@ -12,7 +12,7 @@ class HealthResponse(BaseModel):
     status_unserious: Optional[str] = None
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "status": "200 OK",
             }
@@ -41,7 +41,7 @@ class JobRequest(BaseModel):
     image: ImagePayload
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "prompt": "a Shiba Inu drinking an Americano and eating pancakes",
                 "image": ImagePayload(image_data=test_qr_dataurl),
@@ -54,4 +54,6 @@ class JobStatusResponse(BaseModel):
     status: JobStatus
 
     class Config:
-        schema_extra = {"example": {"job_id": "_test", "status": JobStatus.COMPLETE}}
+        json_schema_extra = {
+            "example": {"job_id": "_test", "status": JobStatus.COMPLETE}
+        }
