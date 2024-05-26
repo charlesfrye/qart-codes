@@ -21,9 +21,9 @@ import { wait } from "@laxels/utils";
 
 function App() {
   const [prompt, setPrompt] = useState(
-    `fireworks, beautiful display above a city, breathtaking spectacle, fiery, shimmering, symphonic, cascading`
+    `neon green cubes, rendered in blender, trending on artstation`
   );
-  const [qrCodeValue, setQRCodeValue] = useState(`tfs.ai/qr-main`);
+  const [qrCodeValue, setQRCodeValue] = useState(`modal.com`);
 
   const [loading, setLoading] = useState(false);
   const [jobID, setJobID] = useState<string | null>(null);
@@ -180,6 +180,7 @@ function App() {
           )}
         </ResultsContainer>
       )}
+      <Footer />
     </Container>
   );
 }
@@ -187,7 +188,7 @@ function App() {
 export default App;
 
 const Container = createDivContainer(
-  "min-h-full flex flex-col items-center justify-center p-4 bg-blue"
+  "min-h-full flex flex-col items-center justify-center p-4 bg-black"
 );
 
 const UserInput: FC<FormProps> = ({ children }) => (
@@ -222,7 +223,7 @@ const Textarea: FC<TextareaProps> = ({ ...inputProps }) => {
 
 const Button: FC<ButtonProps> = ({ ...buttonProps }) => (
   <button
-    className="w-full mt-4 disabled:bg-gray-300 bg-orange hover:bg-orange-light text-white rounded-xl py-2.5 px-8 transition-colors font-bold"
+    className="w-full mt-4 disabled:bg-gray-300 bg-green hover:bg-green-light text-black rounded-xl py-2.5 px-8 transition-colors font-semibold"
     {...buttonProps}
   />
 );
@@ -230,3 +231,14 @@ const Button: FC<ButtonProps> = ({ ...buttonProps }) => (
 const ResultsContainer = createDivContainer(`mt-16 w-full max-w-[512px]`);
 
 const DownloadButtons = createDivContainer(``);
+
+const Footer: FC = () => {
+  return (
+    <footer
+      className="w-full bg-green border-t-4 border-black/75 hover:bg-green-light text-black text-xl py-2.5 px-8 fixed bottom-0  cursor-pointer select-none z-50"
+      onClick={() => (window.location.href = "https://www.modal.com")}
+    >
+      Powered by Modal
+    </footer>
+  );
+};

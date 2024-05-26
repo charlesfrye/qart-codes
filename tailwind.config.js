@@ -4,9 +4,9 @@ export default {
   theme: {
     extend: {
       colors: {
-        blue: `rgb(64, 81, 181)`,
-        orange: `rgb(246, 140, 8)`,
-        "orange-light": `rgb(255, 145, 0)`,
+        black: `#18181B`,
+        green: `#84CC16`,
+        "green-light": `#7FEE64`,
       },
     },
   },
