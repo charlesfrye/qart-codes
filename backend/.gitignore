@@ -1,4 +1,4 @@
-tests/*qr.png
+tests/out/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -8,8 +8,13 @@ BACKEND_URL = "https://charlesfrye--qart-api-dev.modal.run"
 with open(Path("assets") / "qr-dataurl.txt") as f:
     test_qr_dataurl = f.read()
 
+OUTPUT_PATH = Path(__file__).parent / "out"
+OUTPUT_PATH.mkdir(exist_ok=True)
+
 
 def test_end_to_end():
+    health = requests.get(BACKEND_URL + "/health")
+    health.raise_for_status()
     job_route = BACKEND_URL + "/job"
     start = time.monotonic_ns()
     result = requests.post(
@@ -43,7 +48,7 @@ def test_end_to_end():
     )
     result.raise_for_status()
 
-    with open(f"tests/{job_id}-qr.png", "wb") as f:
+    with open(OUTPUT_PATH / f"{job_id}-qr.png", "wb") as f:
         f.write(result.content)
 
     print("written to file at", f.name)
