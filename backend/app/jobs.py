@@ -7,13 +7,14 @@ import modal
 from .common import app
 from .common import ASSETS_DIR, RESULTS_DIR, results_volume
 from .datamodel import JobStatus, JobRequest
-from .generator import Model
 
 jobs = modal.Dict.from_name(
     "qart-codes-jobs",
     {"_test": {"status": JobStatus.COMPLETE}},
     create_if_missing=True,
 )
+
+Model = modal.Cls.lookup("qart-inference", "Model")
 
 
 def start(job_id: str, request: JobRequest):

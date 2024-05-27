@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 import modal
 
-from .common import app
+app = modal.App(name="qart-inference")
 
 inference_image = (
     modal.Image.debian_slim(python_version="3.10")
