@@ -3,12 +3,7 @@ from dataclasses import dataclass
 
 import modal
 
-from .common import ROOT_DIR
 from .common import app
-
-MODELS_DIR = ROOT_DIR / ".cache" / "huggingface"
-
-model_volume = modal.NetworkFileSystem.from_name("qart-models-vol")
 
 inference_image = (
     modal.Image.debian_slim(python_version="3.10")
@@ -35,31 +30,26 @@ class InferenceConfig:
     guidance_scale: int = 9
 
 
+CONFIG = InferenceConfig()
+
+
 @app.cls(
     image=inference_image,
     gpu="a10g",
-    network_file_systems={str(MODELS_DIR): model_volume},
     secrets=[modal.Secret.from_name("huggingface")],
     keep_warm=1,
     container_idle_timeout=1200,
     allow_concurrent_inputs=10,
 )
 class Model:
-    config = InferenceConfig()
-
-    @modal.enter()
-    def start(self):
+    def setup(self, with_cuda=False):
         import os
 
-        from accelerate.utils import write_basic_config
         import huggingface_hub
         from diffusers import ControlNetModel, StableDiffusionControlNetPipeline
         import torch
 
-        write_basic_config(mixed_precision="fp16")
-
         hf_key = os.environ["HUGGINGFACE_TOKEN"]
-        os.environ["HUGGINGFACE_CACHE"] = str(MODELS_DIR)
         huggingface_hub.login(hf_key)
 
         brightness_controlnet = ControlNetModel.from_pretrained(
@@ -78,9 +68,26 @@ class Model:
             torch_dtype=torch.float16,
             use_safetensors=False,
             safety_checker=None,
-        ).to("cuda")
+        )
 
-        controller.enable_xformers_memory_efficient_attention()
+        if with_cuda:
+            controller = controller.to("cuda") if with_cuda else controller
+
+            controller.enable_xformers_memory_efficient_attention()
+
+        return controller
+
+    @modal.build()
+    def download_models(self):
+        self.setup(with_cuda=False)
+
+    @modal.enter()
+    def start(self):
+        from accelerate.utils import write_basic_config
+
+        write_basic_config()
+
+        controller = self.setup(with_cuda=True)
 
         self.pipe = controller
 
@@ -119,12 +126,17 @@ class Model:
             image=[input_image, tile_input_image],
             height=512,
             width=512,
-            num_inference_steps=self.config.num_inference_steps,
-            controlnet_conditioning_scale=self.config.controlnet_conditioning_scale,
-            guidance_scale=self.config.guidance_scale,
+            num_inference_steps=CONFIG.num_inference_steps,
+            controlnet_conditioning_scale=CONFIG.controlnet_conditioning_scale,
+            guidance_scale=CONFIG.guidance_scale,
         )["images"][0]
 
         # blend the input QR code with the output image to improve scanability
         output_image = PIL.Image.blend(input_image, output_image, 0.9)
 
-        return output_image
+        buffer = io.BytesIO()
+        output_image.save(buffer, format="PNG")
+        buffer.seek(0)
+        png_bytes = buffer.getvalue()
+
+        return png_bytes

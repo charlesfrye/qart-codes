@@ -1,19 +1,19 @@
 from pathlib import Path
+from typing import Optional
 
 import modal
-from modal import Dict
+
 
 from .common import app
 from .common import ASSETS_DIR, RESULTS_DIR, results_volume
 from .datamodel import JobStatus, JobRequest
 from .generator import Model
 
-if modal.is_local:
-    jobs = Dict.from_name(
-        "qart-codes-test-jobs",
-        {"_test": {"status": JobStatus.COMPLETE}},
-        create_if_missing=True,
-    )
+jobs = modal.Dict.from_name(
+    "qart-codes-jobs",
+    {"_test": {"status": JobStatus.COMPLETE}},
+    create_if_missing=True,
+)
 
 
 def start(job_id: str, request: JobRequest):
@@ -42,24 +42,26 @@ def cancel(job_id: str):
     set_status(job_id, JobStatus.CANCELLED)
 
 
-def read(job_id: str):
-    path = path_from_job_id(job_id)
-    if not path.exists():
-        raise FileNotFoundError
-    return path
+def read(job_id: str) -> bytes:
+    job = jobs.get(job_id)
+    if job is None:
+        raise KeyError(f"Job {job_id} not found")
+    payload = job["payload"]
+    set_status(job_id, JobStatus.CONSUMED)
+    return payload
 
 
 @app.function(
     timeout=150, network_file_systems={RESULTS_DIR: results_volume}, keep_warm=1
 )
 def generate_and_save(job_id: str, prompt: str, image: str):
-    """Generate a QR code from a prompt and save it to a file."""
+    """Generate a QR code from a prompt and push it into the jobs dict."""
     try:
+        call = Model().generate.spawn(prompt, image)
+        set_status(job_id, JobStatus.RUNNING)
         path = path_from_job_id(job_id)
         dir_path = path.parent
         dir_path.mkdir(parents=True, exist_ok=True)
-        call = Model().generate.spawn(prompt, image)
-        set_status(job_id, JobStatus.RUNNING)
     except Exception as e:
         set_status(job_id, JobStatus.FAILED)
         jobs[job_id]["error"] = e
@@ -67,21 +69,22 @@ def generate_and_save(job_id: str, prompt: str, image: str):
 
     # await the result
     try:
-        generator_response = call.get(timeout=90)
+        image_bytes = call.get(timeout=90)
     except TimeoutError as e:
         set_status(job_id, JobStatus.FAILED)
         jobs[job_id]["error"] = e
         return
 
+    set_status(job_id, JobStatus.COMPLETE, payload=image_bytes)
+
     # write the result to a file
-    save_qr_code(generator_response, path)
-
-    set_status(job_id, JobStatus.COMPLETE)
+    save_qr_code(image_bytes, path)
 
 
-def save_qr_code(image, path):
+def save_qr_code(image_bytes, path):
     print(path)
-    return image.save(path)
+    with open(path, "wb") as f:
+        f.write(image_bytes)
 
 
 def path_from_job_id(job_id: str) -> Path:
@@ -102,8 +105,9 @@ def get_status(job_id: str) -> JobStatus:
         return JobStatus.NOT_STARTED
 
 
-def set_status(job_id: str, status: JobStatus):
+def set_status(job_id: str, status: JobStatus, payload: Optional[bytes] = None):
     print(f"{job_id} setting status to {status}")
     state = jobs.pop(job_id)
     state["status"] = status
+    state["payload"] = payload
     jobs.put(job_id, state)

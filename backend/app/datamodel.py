@@ -28,6 +28,7 @@ class JobStatus(str, Enum):
     PENDING = "PENDING"
     RUNNING = "RUNNING"
     COMPLETE = "COMPLETE"
+    CONSUMED = "CONSUMED"
     CANCELLED = "CANCELLED"
     FAILED = "FAILED"
 
