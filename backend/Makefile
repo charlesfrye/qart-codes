@@ -21,10 +21,11 @@ help: banner ## get a list of all the targets, plus short descriptions
 	@# source for the incantation: https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' Makefile | awk 'BEGIN {FS = ":.*?##"}; {printf "\033[36m%-12s\033[0m %s\n", $$1, $$2}'
 
-app: modal-auth ## deploy the application on Modal
+api: modal-auth ## deploy the generator and API on Modal
+	modal deploy generator
 		$(if $(filter prod, $(value ENV)),\
-			modal deploy app.main, \
-      modal serve app.main \
+			modal deploy api, \
+      modal serve api \
 		)
 
 tests: modal-auth dev-environment ## run the tests (you'll need to run modal serve too)
