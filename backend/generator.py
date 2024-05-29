@@ -1,5 +1,6 @@
 """Text-conditioned generative model of QR code images."""
 from dataclasses import dataclass
+from pathlib import Path
 
 import modal
 
@@ -8,14 +9,14 @@ app = modal.App(name="qart-inference")
 inference_image = (
     modal.Image.debian_slim(python_version="3.10")
     .pip_install(
-        "accelerate",
-        "datasets",
-        "diffusers",
-        "Pillow",
-        "torch",
-        "transformers",
-        "triton",
-        "xformers",
+        "accelerate==0.21.0",
+        "datasets==2.13.1",
+        "diffusers==0.20.2",
+        "Pillow~=10.0.0",
+        "torch==2.0.1",
+        "transformers==4.30.2",
+        "triton==2.0.0",
+        "xformers==0.0.20",
     )
     .apt_install("ffmpeg", "libsm6", "libxext6")
 )
@@ -25,9 +26,9 @@ inference_image = (
 class InferenceConfig:
     """Configuration information for inference."""
 
-    num_inference_steps: int = 50
-    controlnet_conditioning_scale = [0.45, 0.25]
-    guidance_scale: int = 9
+    num_inference_steps: int = 100
+    controlnet_conditioning_scale: float = 1.5
+    guidance_scale: float = 8.0
 
 
 CONFIG = InferenceConfig()
@@ -35,7 +36,7 @@ CONFIG = InferenceConfig()
 
 @app.cls(
     image=inference_image,
-    gpu="a10g",
+    gpu="a100",
     secrets=[modal.Secret.from_name("huggingface")],
     keep_warm=1,
     container_idle_timeout=1200,
@@ -46,29 +47,32 @@ class Model:
         import os
 
         import huggingface_hub
-        from diffusers import ControlNetModel, StableDiffusionControlNetPipeline
+        from diffusers import (
+            ControlNetModel,
+            DDIMScheduler,
+            StableDiffusionControlNetPipeline,
+        )
         import torch
 
         hf_key = os.environ["HUGGINGFACE_TOKEN"]
         huggingface_hub.login(hf_key)
 
-        brightness_controlnet = ControlNetModel.from_pretrained(
-            "ioclab/control_v1p_sd15_brightness", torch_dtype=torch.float16
-        )
-
-        tile_controlnet = ControlNetModel.from_pretrained(
-            "lllyasviel/control_v11f1e_sd15_tile",
+        controlnet = ControlNetModel.from_pretrained(
+            "monster-labs/control_v1p_sd15_qrcode_monster",
             torch_dtype=torch.float16,
-            use_safetensors=False,
+            use_safetensors=True,
+            subfolder="v2",
         )
 
         controller = StableDiffusionControlNetPipeline.from_pretrained(
             "Lykon/DreamShaper",
-            controlnet=[brightness_controlnet, tile_controlnet],
+            controlnet=controlnet,
             torch_dtype=torch.float16,
             use_safetensors=False,
             safety_checker=None,
         )
+
+        controller.scheduler = DDIMScheduler.from_config(controller.scheduler.config)
 
         if with_cuda:
             controller = controller.to("cuda") if with_cuda else controller
@@ -119,20 +123,20 @@ class Model:
         input_image = PIL.Image.open(io.BytesIO(base64.b64decode(input_image))).convert(
             "RGB"
         )
-        input_image = input_image.resize((512, 512), resample=PIL.Image.LANCZOS)
-        tile_input_image = self.resize_for_condition_image(input_image)
+        input_image = input_image.resize((768, 768), resample=PIL.Image.LANCZOS)
         output_image = self.pipe(
             text,
-            image=[input_image, tile_input_image],
-            height=512,
-            width=512,
+            negative_prompt="ugly, disfigured, low quality, blurry",
+            image=input_image,
+            height=768,
+            width=768,
             num_inference_steps=CONFIG.num_inference_steps,
             controlnet_conditioning_scale=CONFIG.controlnet_conditioning_scale,
             guidance_scale=CONFIG.guidance_scale,
         )["images"][0]
 
         # blend the input QR code with the output image to improve scanability
-        output_image = PIL.Image.blend(input_image, output_image, 0.9)
+        output_image = PIL.Image.blend(input_image, output_image, 0.85)
 
         buffer = io.BytesIO()
         output_image.save(buffer, format="PNG")
@@ -140,3 +144,30 @@ class Model:
         png_bytes = buffer.getvalue()
 
         return png_bytes
+
+
+@app.local_entrypoint()
+def main(text: str = None):
+    qr_dataurl = (Path(__file__).parent / "assets" / "qr-dataurl.txt").read_text()
+    if text is None:
+        text = "neon green prism, glowing, reflective, iridescent, metallic, rendered with blender, trending on artstation"
+    image_bytes = Model.generate.remote(
+        text=text,
+        input_image=qr_dataurl,
+    )
+    with open(
+        Path(__file__).parent / "tests" / "out" / f"{slugify(text)}.png", "wb"
+    ) as f:
+        f.write(image_bytes)
+
+    print("saved output to", f.name)
+
+
+def slugify(string):
+    return (
+        string.lower()
+        .replace(" ", "-")
+        .replace(",", "")
+        .replace(".", "")
+        .replace("/", "")
+    )
