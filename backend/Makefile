@@ -45,10 +45,10 @@ modal-token: environment ## creates token ID and secret for authentication with 
 	@echo "###"
 
 environment: ## sets up the environment
-	pip install -r requirements.txt
+	python -m pip install -r requirements.txt
 
 dev-environment: environment ## sets up the environment for development
-	pip install -r requirements.dev.txt
+	python -m pip install -r requirements.dev.txt
 
 banner: ## prints the logo in the terminal
 	@cat assets/logo
