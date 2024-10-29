@@ -53,7 +53,7 @@ def read(job_id: str) -> bytes:
 
 
 @app.function(
-    timeout=150, network_file_systems={RESULTS_DIR: results_volume}, keep_warm=1
+    timeout=150, volumes={RESULTS_DIR: results_volume}, keep_warm=1
 )
 def generate_and_save(job_id: str, prompt: str, image: str):
     """Generate a QR code from a prompt and push it into the jobs dict."""
