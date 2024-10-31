@@ -89,10 +89,8 @@ def generate_detector_set():
 # function for openCV qr detection
 @app.function(image=image)
 def detect_qr_opencv(image_bytes) -> Tuple[bool, str | None]:
-    print("1")
     import cv2
     import os
-    print("2")
 
     # lazy way to convert bytes to opencv image by writing to tmp file
     tmp_path = "tmp.png"
@@ -100,7 +98,6 @@ def detect_qr_opencv(image_bytes) -> Tuple[bool, str | None]:
         f.write(image_bytes)
     image = cv2.imread(tmp_path)
     os.remove(tmp_path)
-    print("3")
 
     if image is None:
         valid = False
@@ -109,7 +106,6 @@ def detect_qr_opencv(image_bytes) -> Tuple[bool, str | None]:
         
     qr_detector = cv2.QRCodeDetector()
     decoded_text, points, _ = qr_detector.detectAndDecode(image)
-    print("4")
     
     if points is None or decoded_text is None:
         valid = False
