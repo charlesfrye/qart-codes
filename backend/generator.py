@@ -2,10 +2,9 @@
 from dataclasses import dataclass
 from pathlib import Path
 import os
+from common import app
 
 import modal
-
-app = modal.App(name="qart-inference")
 
 inference_image = (
     modal.Image.debian_slim(python_version="3.10")

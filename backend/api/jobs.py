@@ -14,7 +14,7 @@ jobs = modal.Dict.from_name(
     create_if_missing=True,
 )
 
-Model = modal.Cls.lookup("qart-inference", "Model")
+Model = modal.Cls.lookup("qart", "Model")
 
 
 def start(job_id: str, request: JobRequest):
