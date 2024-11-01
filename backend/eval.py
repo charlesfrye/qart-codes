@@ -7,8 +7,8 @@ DETECTOR_SET = Path(__file__).parent /  "evals" / "data" / "detector"
 
 # we just share the same image across detectors
 image = (modal.Image.debian_slim().
-    apt_install("python3-opencv").
-    pip_install("opencv-python", "qrcode", "pillow")
+    apt_install("python3-opencv", "libzbar0").
+    pip_install("opencv-python", "qrcode", "pillow", "pyzbar", "qreader")
 )
 
 # shared function for generating qr code image
@@ -87,13 +87,16 @@ def generate_detector_set():
 
 
 # function for openCV qr detection
-@app.function(image=image)
+@app.function(image=image, allow_concurrent_inputs=100)
 def detect_qr_opencv(image_bytes) -> Tuple[bool, str | None]:
     import cv2
     import os
+    from uuid import uuid4
 
     # lazy way to convert bytes to opencv image by writing to tmp file
-    tmp_path = "tmp.png"
+    # we allow concurrent inputs, so use uuid for the file to avoid collisions
+    uuid = str(uuid4())
+    tmp_path = f"tmp_{uuid}.png"
     with open(tmp_path, "wb") as f:
         f.write(image_bytes)
     image = cv2.imread(tmp_path)
@@ -116,10 +119,100 @@ def detect_qr_opencv(image_bytes) -> Tuple[bool, str | None]:
     return valid, decoded_text
 
 # function for *other method* qr detection
+@app.function(image=image, allow_concurrent_inputs=100)
+def detect_qr_pyzbar(image_bytes) -> Tuple[bool, str | None]:
+    import cv2
+    import os
+    from uuid import uuid4
+    from pyzbar import pyzbar
+
+    # lazy way to convert bytes to opencv image by writing to tmp file
+    # we allow concurrent inputs, so use uuid for the file to avoid collisions
+    uuid = str(uuid4())
+    tmp_path = f"tmp_{uuid}.png"
+    with open(tmp_path, "wb") as f:
+        f.write(image_bytes)
+    image = cv2.imread(tmp_path)
+    os.remove(tmp_path)
+
+    if image is None:
+        valid = False
+        decoded_text = None
+        return valid, decoded_text  
+
+    barcodes = pyzbar.decode(image)
+    if len(barcodes) == 0:
+        valid = False
+        decoded_text = None
+        return valid, decoded_text
+
+    if len(barcodes) > 1:
+        print("Found multiple QR codes, defaulting to first")
+
+    barcode = barcodes[0]
+    (x, y, w, h) = barcode.rect
+    
+    # Draw bounding box
+    cv2.rectangle(image, (x, y), (x + w, y + h), (0, 0, 255), 2)
+    barcode_data = barcode.data.decode("utf-8")
+    valid = True
+    return valid, barcode_data
+
+# QReader uses YOLO model under the hood to detect QR codes
+# So we do this one as a modal class rather than a function,
+# to reuse the model weights between calls
+@app.cls(
+    image=image,
+    gpu="t4",
+)
+class QReader:
+    @modal.build() # assuming it downloads and caches the model on load
+    @modal.enter()
+    def init(self):
+        import cv2
+        from qreader import QReader
+        self.qreader = QReader()
+
+    @modal.method()
+    def detect_and_decode(self, image_bytes):
+        import cv2
+        import os
+        from uuid import uuid4
+
+        # lazy way to convert bytes to opencv image by writing to tmp file
+        # we allow concurrent inputs, so use uuid for the file to avoid collisions
+        uuid = str(uuid4())
+        tmp_path = f"tmp_{uuid}.png"
+        with open(tmp_path, "wb") as f:
+            f.write(image_bytes)
+        image = cv2.imread(tmp_path)
+        os.remove(tmp_path)
+
+        if image is None:
+            valid = False
+            decoded_text = None  
+            return valid, decoded_text
+
+        decoded_text = self.qreader.detect_and_decode(image=image)
+        print("Decoded QR code:", decoded_text)
+        return True, decoded_text
+
 @app.function(image=image)
-def detect_qr_other(image_bytes) -> Tuple[bool, str | None]:
-    # todo
-    return False, None
+def detect_qr_qreader(image_bytes) -> Tuple[bool, str | None]:
+    from qreader import QReader
+    import cv2
+
+    # Create QReader instance
+    qreader = QReader()
+
+    # Read image
+    image = cv2.imread("image.jpg")
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+    # Detect and decode QR codes
+    decoded_text = qreader.detect_and_decode(image=image)
+
+    print(f"Decoded QR code: {decoded_text}")
 
 # local entrypoint for sweeping through ./evals/data/detector 
 @app.local_entrypoint()
@@ -127,8 +220,9 @@ def compare_detectors():
     # ensure detector set exists and is sorted
     if not DETECTOR_SET.exists():
         return
-
-    user_instruction = "Detector set must be manually sorted into /valid and /invalid folders based on iphone qr reads"
+    
+    
+    user_instruction = "Detector set must be manually sorted into /valid and /invalid folders based on iphone qr reads." # noqa: E501
 
     unsorted = list(DETECTOR_SET.glob("*.png"))
     if len(unsorted) != 0:
@@ -161,29 +255,35 @@ def compare_detectors():
         with open(invalid_img, "rb") as f:
             invalid_img_bytes.append(f.read())
 
-    # opencv detector
-    true_positives = 0
-    false_positives = 0
-    true_negatives = 0
-    false_negatives = 0
-    for valid, _ in detect_qr_opencv.map(valid_img_bytes):
-        if valid:
-            print("True Positive")
-            true_positives += 1
-        else:
-            print("False Negative")
-            false_negatives += 1
-    
-    for valid, _ in detect_qr_opencv.map(invalid_img_bytes):
-        if valid:
-            print("False Positive")
-            false_positives += 1
-        else:
-            print("True Negative")
-            true_negatives += 1
+    # load our QReader detector, which is class-based so needs to pre-init
+    qreader = QReader()
 
-    print("\nOpenCV:")
-    print(f"True Positives: {true_positives}")
-    print(f"False Positives: {false_positives}")
-    print(f"True Negatives: {true_negatives}")
-    print(f"False Negatives: {false_negatives}")
+    # map of detector functions. Must have the same function signatures!
+    detectors = {
+        "OpenCV": detect_qr_opencv, 
+        "Pyzbar": detect_qr_pyzbar, 
+        "QReader": qreader.detect_and_decode
+    }
+
+    for detector_name, detector in detectors.items():
+        true_positives = 0
+        false_positives = 0
+        true_negatives = 0
+        false_negatives = 0
+        for valid, _ in detector.map(valid_img_bytes):
+            if valid:
+                true_positives += 1
+            else:
+                false_negatives += 1
+        
+        for valid, _ in detector.map(invalid_img_bytes):
+            if valid:
+                false_positives += 1
+            else:
+                true_negatives += 1
+
+        print(f"\nDetector:        {detector_name}")
+        print(f"True Positives:  {true_positives}")
+        print(f"False Positives: {false_positives}")
+        print(f"True Negatives:  {true_negatives}")
+        print(f"False Negatives: {false_negatives}")
