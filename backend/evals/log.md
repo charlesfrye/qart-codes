@@ -189,5 +189,31 @@ In our case, we choose the ensemble, because QR scannability is paramount, so it
 
 Let's finally create our pass@n eval harness.
 
-### Measurement - Aesthetic Preference
-We also want a way to eval 
+...
+
+BIG NOTE, edit for blog: while implementing ensamble as a function, I realized that sometimes OpenCV would return a "" decoded text, which was never checked and would count as a positive.
+
+Actual numbers:
+```
+Detector:        OpenCV
+True Positives:  21
+False Positives: 0
+True Negatives:  19
+False Negatives: 89
+Score:           0.310
+
+Detector:        Pyzbar
+True Positives:  30
+False Positives: 1
+True Negatives:  18
+False Negatives: 80
+Score:           0.372
+
+Detector:        Ensemble
+True Positives:  37
+False Positives: 1
+True Negatives:  18
+False Negatives: 73
+Score:           0.426
+```
+

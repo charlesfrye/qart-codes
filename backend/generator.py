@@ -39,9 +39,9 @@ CONFIG = InferenceConfig()
     image=inference_image,
     gpu="a100",
     secrets=[modal.Secret.from_name("huggingface")],
-    keep_warm=1,
+    # keep_warm=1,
     container_idle_timeout=1200,
-    allow_concurrent_inputs=10,
+    # allow_concurrent_inputs=10,
 )
 class Model:
     def setup(self, with_cuda=False):

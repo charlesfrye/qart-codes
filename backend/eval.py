@@ -3,6 +3,8 @@ from typing import Tuple
 import modal
 from common import app
 
+from generator import Model
+
 DETECTOR_SET = Path(__file__).parent /  "evals" / "data" / "detector"
 
 # we just share the same image across detectors
@@ -12,9 +14,12 @@ image = (modal.Image.debian_slim().
 )
 
 # shared function for generating qr code image
-@app.function(image=image)
+@app.function(
+    image=image, 
+    # concurrency_limit=1
+)
 def generate_image(prompt: str, qr_url: str) -> bytes:
-    from generator import Model
+
     import base64
     import io
     import qrcode
@@ -110,7 +115,7 @@ def detect_qr_opencv(image_bytes) -> Tuple[bool, str | None]:
     qr_detector = cv2.QRCodeDetector()
     decoded_text, points, _ = qr_detector.detectAndDecode(image)
     
-    if points is None or decoded_text is None:
+    if points is None or decoded_text is None or decoded_text == "":
         valid = False
         decoded_text = None
         return valid, decoded_text
@@ -150,11 +155,12 @@ def detect_qr_pyzbar(image_bytes) -> Tuple[bool, str | None]:
         print("Found multiple QR codes, defaulting to first")
 
     barcode = barcodes[0]
-    (x, y, w, h) = barcode.rect
-    
-    # Draw bounding box
-    cv2.rectangle(image, (x, y), (x + w, y + h), (0, 0, 255), 2)
     barcode_data = barcode.data.decode("utf-8")
+    if barcode_data == "" or barcode_data is None:
+        valid = False
+        decoded_text = None
+        return valid, decoded_text
+    
     valid = True
     return valid, barcode_data
 
@@ -424,8 +430,81 @@ def test_ensemble():
     score("Pyzbar", pyzbar_detected)
     score("Ensemble", ensemble_detected)
 
+# function for ensemble qr detection
+@app.function(image=image, allow_concurrent_inputs=100)
+def detect_qr_ensemble(image_bytes) -> Tuple[bool, str | None]:
+    import cv2
+    import os
+    from uuid import uuid4
+    from pyzbar import pyzbar
+
+    # lazy way to convert bytes to opencv image by writing to tmp file
+    # we allow concurrent inputs, so use uuid for the file to avoid collisions
+    uuid = str(uuid4())
+    tmp_path = f"tmp_{uuid}.png"
+    with open(tmp_path, "wb") as f:
+        f.write(image_bytes)
+    image = cv2.imread(tmp_path)
+    os.remove(tmp_path)
+
+    if image is None:
+        valid = False
+        decoded_text = None
+        return valid, decoded_text  
+
+    # OpenCV
+    qr_detector = cv2.QRCodeDetector()
+    opencv_decoded_text, opencv_points, _ = qr_detector.detectAndDecode(image)
+    opencv_detected = opencv_points is not None and opencv_decoded_text is not None and opencv_decoded_text != ""
+
+    # Pyzbar
+    pyz_barcodes = pyzbar.decode(image)
+    pyzbar_detected = len(pyz_barcodes) > 0
+    
+    # If neither detect, return false
+    if not pyzbar_detected and not opencv_detected:
+        valid = False
+        decoded_text = None
+        return valid, decoded_text
+
+    # If just pyzbar detects, return pyzbar result
+    if pyzbar_detected and not opencv_detected:
+        decoded_text = pyz_barcodes[0].data.decode("utf-8")
+        return True, decoded_text
+    
+    # If just opencv detects, return opencv result
+    if opencv_detected and not pyzbar_detected:
+        return True, opencv_decoded_text
+
+    # If both detect, ensure they're the same
+    if opencv_detected and pyzbar_detected:
+        if pyz_barcodes[0].data.decode("utf-8") == opencv_decoded_text:
+            return True, pyz_barcodes[0].data.decode("utf-8")
+        else:
+            print(f"Pyzbar and OpenCV decode to different texts, {pyz_barcodes[0].data.decode('utf-8')} and {opencv_decoded_text} returning false")
+            return False, None
+
+
 @app.local_entrypoint()
 def eval_scannability():
     # The official eval script for scannability
     # We use the ensemble of opencv and pyzbar as our detector
 
+    prompts = [
+        "A cat in a hat",
+        # "A pirate ship birthday party",
+        # "A shiba inu drinking an americano",
+        # "Solarpunk architecture",
+    ]
+
+    n = 10
+
+    for prompt in prompts:
+        print(f"Prompt: {prompt}")
+        # use google as the qr url for now
+        for image_bytes in generate_image.starmap([(prompt, f"https://www.google.com")] * n):
+            valid, decoded_text = detect_qr_ensemble.remote(image_bytes)
+            if valid:
+                print(f"Valid QR code: {decoded_text}")
+            else:
+                print(f"Invalid QR code: {decoded_text}")
