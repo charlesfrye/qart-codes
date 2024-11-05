@@ -9,7 +9,7 @@ Evals need:
 Day 1:
 Exploring Weights and Biases. It has the ability to log code at the exact point of the run, even between commits, so we can run evals against changing codebases and know how to return to the highest performing version.
 
-### Measurement
+### Measurement - Scannability
 Day 2:
 
 Define "ground truth" - thankfully for us, there's a clear pass-fail criteria of if it's scanned by phones. I use iphone 12 pro to scan.
@@ -28,7 +28,8 @@ As of 2:49pm oct 31 I'm working on pitting openCV against other methods for how 
 and idea I had, while doing the act of manually scanning, is that motion / angles were often helpful to get the iphone to detect the QR code, so if I can't get to good detection immediately with openCV or alternative libraries/methods, the next thing to try is to use image augmentation to warp the images in ways that maybe help the library detect it better (skewing, bluring, rotating, etc.) and accept it if any of the augmentations pass.
 
 Day 4:
-Nov 1, I tested three methods: openCV, pyzbar.
+`modal run eval.compare_detectors`
+Nov 1, I tested three methods: openCV, pyzbar, QReader. Here's the first two:
 Scores:
 ```
 Detector:        OpenCV
@@ -53,7 +54,7 @@ False Positives: 19
 True Negatives:  0
 False Negatives: 0
 ```
-oh shit, it ranked the models as all-positive! Which, they should be. Let's check decoded text to gut check:
+oh shit, it ranked the generation as all-positive! Which, they should be. Keep in mind this is relative to iphone detections, so false-positive means QReader detected a code better than the iphone. Let's check decoded text to gut check:
 ```
 Decoded QR code: ('https://www.instagram.com',)
 Decoded QR code: ('https://www.deviantart.com',)
@@ -73,3 +74,120 @@ Reestablishing our goals, we want to maximize likilhood our model generates ipho
 - If the eval says the generation is usually quite flawed (openCV, pyzbar), that gives us a labeled set of scannable QRs that we can use for future retraining. But, since openCV and pyzbar likely require "simple" qr images, pushing our model in that direction would make it output more vanilla, boring QRs.
 
 In fact, something we can optionally do here is use openCV or pyzbar as a proxy to measure "boringness" of a QR.
+
+New quest! QReader is a YOLO model, so we can actually adjust its confidence threshold to dial in on the perfect representation of iphone scans.
+
+Add config to qreader class, then PID loop to optimize it.
+`modal run eval.optimize_qreader_threshold`
+
+Day 5:
+Strangely, grid search and optimizing the confidence threshold between 0.5 to 0.99 didn't change the score much at all.
+```
+Testing threshold: 0.500
+True Positives:  110
+False Positives: 19
+True Negatives:  0
+False Negatives: 0
+Score:           0.853
+
+Testing threshold: 0.570
+True Positives:  110
+False Positives: 19
+True Negatives:  0
+False Negatives: 0
+Score:           0.853
+
+Testing threshold: 0.640
+True Positives:  110
+False Positives: 19
+True Negatives:  0
+False Negatives: 0
+Score:           0.853
+
+Testing threshold: 0.710
+True Positives:  109
+False Positives: 19
+True Negatives:  0
+False Negatives: 1
+Score:           0.845
+
+Testing threshold: 0.780
+True Positives:  109
+False Positives: 19
+True Negatives:  0
+False Negatives: 1
+Score:           0.845
+
+Testing threshold: 0.850
+True Positives:  107
+False Positives: 19
+True Negatives:  0
+False Negatives: 3
+Score:           0.829
+
+Testing threshold: 0.920
+True Positives:  101
+False Positives: 19
+True Negatives:  0
+False Negatives: 9
+Score:           0.783
+
+Testing threshold: 0.990
+True Positives:  0
+False Positives: 0
+True Negatives:  19
+False Negatives: 110
+Score:           0.147
+```
+
+Increasing threshold made the QReader have false negatives rather than true negatives, meaning at higher threshold it starts missing iphone-valid QRs, while still detecting iphone-invalid QRs. In other words, QReader's accuracy is on a slightly different set of QRs than the iphone.
+
+Could be interesting to see what happens between 0.92 and 0.99, because that seems to be where the confidence threshold starts making a difference.
+Put a pin in that. We may or may not return to it.
+
+Now let's try a different method, ensembling the two heuristic detectors together (OR).
+On all images, let's visually gut check the results of both detectors across the valid and invalid buckets.
+```
+OpenCV:
+[1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+Pyzbar:
+[0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+```
+Frequently, OpenCV and Pyzbar have different results, meaning we'd improve detection by taking the OR of the two, (at risk of false positives).
+
+This yields:
+```
+Detector:        OpenCV
+True Positives:  44
+False Positives: 1
+True Negatives:  18
+False Negatives: 66
+Score:           0.481
+
+Detector:        Pyzbar
+True Positives:  30
+False Positives: 1
+True Negatives:  18
+False Negatives: 80
+Score:           0.372
+
+Detector:        Ensemble
+True Positives:  53
+False Positives: 2
+True Negatives:  17
+False Negatives: 57
+Score:           0.543
+```
+
+So, we're getting a score of 0.543 for the ensemble, which is pretty good.
+
+We now need to decide between two methods:
+- QReader, which produces many false positives
+- Ensemble, which produces many false negatives
+  
+In our case, we choose the ensemble, because QR scannability is paramount, so it's better to err on the side of false negatives for our evals. This is a tradeoff we make in our evals, likely sacrificing visual quality for the sake of near-perfect iphone scans.
+
+Let's finally create our pass@n eval harness.
+
+### Measurement - Aesthetic Preference
+We also want a way to eval 

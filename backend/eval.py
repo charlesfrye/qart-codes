@@ -118,7 +118,7 @@ def detect_qr_opencv(image_bytes) -> Tuple[bool, str | None]:
     valid = True
     return valid, decoded_text
 
-# function for *other method* qr detection
+# function for pyzbar qr detection
 @app.function(image=image, allow_concurrent_inputs=100)
 def detect_qr_pyzbar(image_bytes) -> Tuple[bool, str | None]:
     import cv2
@@ -166,12 +166,18 @@ def detect_qr_pyzbar(image_bytes) -> Tuple[bool, str | None]:
     gpu="t4",
 )
 class QReader:
+    def __init__(self, threshold = 0.5, model_size = "s"):
+        self.threshold = threshold
+        self.model_size = model_size
+    
     @modal.build() # assuming it downloads and caches the model on load
     @modal.enter()
-    def init(self):
-        import cv2
-        from qreader import QReader
-        self.qreader = QReader()
+    def load(self):
+        from qreader import QReader as QR
+        self.qreader = QR(
+            min_confidence = self.threshold, 
+            model_size = self.model_size
+        )
 
     @modal.method()
     def detect_and_decode(self, image_bytes):
@@ -192,29 +198,17 @@ class QReader:
             valid = False
             decoded_text = None  
             return valid, decoded_text
-
+        
         decoded_text = self.qreader.detect_and_decode(image=image)
-        print("Decoded QR code:", decoded_text)
+        if len(decoded_text) == 0:
+            valid = False
+            decoded_text = None
+            return valid, decoded_text
+
+        decoded_text = decoded_text[0]
         return True, decoded_text
 
-@app.function(image=image)
-def detect_qr_qreader(image_bytes) -> Tuple[bool, str | None]:
-    from qreader import QReader
-    import cv2
-
-    # Create QReader instance
-    qreader = QReader()
-
-    # Read image
-    image = cv2.imread("image.jpg")
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
-    # Detect and decode QR codes
-    decoded_text = qreader.detect_and_decode(image=image)
-
-    print(f"Decoded QR code: {decoded_text}")
-
-# local entrypoint for sweeping through ./evals/data/detector 
+# local entrypoint for sweeping through ./evals/data/detector
 @app.local_entrypoint()
 def compare_detectors():
     # ensure detector set exists and is sorted
@@ -287,3 +281,151 @@ def compare_detectors():
         print(f"False Positives: {false_positives}")
         print(f"True Negatives:  {true_negatives}")
         print(f"False Negatives: {false_negatives}")
+
+@app.local_entrypoint()
+def optimize_qreader_threshold():
+    # knowing that qreader has an adjustable threshold, 
+    # we can use an optimization library to find the best threshold
+    # this is likely overkill, but it's a fun exercise!
+    
+    import numpy as np
+    from scipy.optimize import minimize
+
+    valid_dir = DETECTOR_SET / "valid"
+    invalid_dir = DETECTOR_SET / "invalid"
+    valid_imgs = list(valid_dir.glob("*.png"))
+    invalid_imgs = list(invalid_dir.glob("*.png"))
+    valid_img_bytes = []
+    invalid_img_bytes = []
+    for valid_img in valid_imgs:
+        with open(valid_img, "rb") as f:
+            valid_img_bytes.append(f.read())
+    for invalid_img in invalid_imgs:
+        with open(invalid_img, "rb") as f:
+            invalid_img_bytes.append(f.read())
+    
+    def objective(threshold):
+        threshold = threshold[0] # Scipy provides a tuple to objective func
+        print(f"\nTesting threshold: {threshold:.3f}")
+        qreader = QReader(threshold = threshold)
+        true_positives = 0
+        false_positives = 0
+        true_negatives = 0
+        false_negatives = 0
+        for valid, _ in qreader.detect_and_decode.map(valid_img_bytes):
+            if valid:
+                true_positives += 1
+            else:
+                false_negatives += 1
+        
+        for valid, _ in qreader.detect_and_decode.map(invalid_img_bytes):
+            if valid:
+                false_positives += 1
+            else:
+                true_negatives += 1
+
+        print(f"True Positives:  {true_positives}")
+        print(f"False Positives: {false_positives}")
+        print(f"True Negatives:  {true_negatives}")
+        print(f"False Negatives: {false_negatives}")
+        true_cases = true_positives + true_negatives
+        false_cases = false_positives + false_negatives
+        score = true_cases / (true_cases + false_cases)
+        print(f"Score:           {score:.3f}")
+        return -score # Scipy can only minimize, so we negate the score
+
+    # Phase 1: Coarse grid search
+    print("Beginning coarse grid search...")
+    thresholds = np.linspace(0.5, 0.99, 8)  # 8 points between thresholds 0.5 and 0.99
+    best_score = -2 # initial score, theoretical min is -1
+    best_threshold = None
+    for threshold in thresholds:
+        score = -objective([threshold])
+        if score > best_score:
+            best_score = score
+            best_threshold = threshold
+    
+    # Phase 2: Fine-tune with L-BFGS-B
+    print("Beginning fine grain optimization...")
+    result = minimize(
+        objective,
+        best_threshold,
+        bounds=[(max(0, best_threshold-0.2), min(1, best_threshold+0.2))],  # Narrow bounds
+        method='L-BFGS-B',
+        options={'maxiter': 8}  # Just a few iterations for fine-tuning
+    )
+
+    optimal_threshold = result.x[0]
+    print(f"Optimal threshold: {optimal_threshold:.3f}")
+    print(f"Best score: {-result.fun:.3f}")
+
+
+@app.local_entrypoint()
+def test_ensemble():
+    # if we keep the OR of opencv and pyzbar, does that eliminate false negatives and get closer to iphone?
+    
+    valid_dir = DETECTOR_SET / "valid"
+    invalid_dir = DETECTOR_SET / "invalid"
+    valid_imgs = list(valid_dir.glob("*.png"))
+    invalid_imgs = list(invalid_dir.glob("*.png"))
+    valid_img_bytes = []
+    invalid_img_bytes = []
+    for valid_img in valid_imgs:
+        with open(valid_img, "rb") as f:
+            valid_img_bytes.append(f.read())
+    for invalid_img in invalid_imgs:
+        with open(invalid_img, "rb") as f:
+            invalid_img_bytes.append(f.read())
+        
+
+    opencv_detected = []
+    pyzbar_detected = []
+    for valid, _ in detect_qr_opencv.map(valid_img_bytes + invalid_img_bytes):
+        opencv_detected.append(valid)
+    for valid, _ in detect_qr_pyzbar.map(valid_img_bytes + invalid_img_bytes):
+        pyzbar_detected.append(valid)
+
+    print("OpenCV:")
+    print([1 if valid else 0 for valid in opencv_detected])
+    print("Pyzbar:")
+    print([1 if valid else 0 for valid in pyzbar_detected])
+
+    ensemble_detected = [x or y for x, y in zip(opencv_detected, pyzbar_detected)]
+    print("Ensemble:")
+    print([1 if valid else 0 for valid in ensemble_detected])
+
+    def score(name, detections):
+        tp = 0
+        fp = 0
+        tn = 0
+        fn = 0
+        for i, valid in enumerate(detections):
+            if i < len(valid_imgs):
+                # then we're in the valid bucket
+                if valid:
+                    tp += 1
+                else:
+                    fn += 1
+            else:
+                # then we're in the invalid bucket
+                if valid:
+                    fp += 1
+                else:
+                    tn += 1
+
+        print(f"For detector {name}:")
+        print(f"True Positives:  {tp}")
+        print(f"False Positives: {fp}")
+        print(f"True Negatives:  {tn}")
+        print(f"False Negatives: {fn}")
+        print(f"Score:           {(tp + tn) / (tp + tn + fp + fn):.3f}")
+    
+    score("OpenCV", opencv_detected)
+    score("Pyzbar", pyzbar_detected)
+    score("Ensemble", ensemble_detected)
+
+@app.local_entrypoint()
+def eval_scannability():
+    # The official eval script for scannability
+    # We use the ensemble of opencv and pyzbar as our detector
+
