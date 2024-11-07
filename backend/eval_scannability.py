@@ -5,7 +5,7 @@ from common import app
 
 from generator import Model
 
-DETECTOR_SET = Path(__file__).parent /  "evals" / "data" / "detector"
+SCANNABILITY_SET = Path(__file__).parent /  "evals" / "data" / "scannability"
 
 # we just share the same image across detectors
 image = (modal.Image.debian_slim().
@@ -39,7 +39,7 @@ def generate_image(prompt: str, qr_url: str) -> bytes:
 
     return image_bytes
 
-# local entrypoint for generating ./evals/data/detector set
+# local entrypoint for generating ./evals/data/scannability set
 @app.local_entrypoint()
 def generate_detector_set():
     from wonderwords import RandomWord # requires pip install wonderwords
@@ -85,7 +85,7 @@ def generate_detector_set():
     for image_bytes in generate_image.starmap(args):
         prompt = args[i][0].replace(" ", "_")
         i += 1
-        image_path = DETECTOR_SET / f"{prompt}.png"
+        image_path = SCANNABILITY_SET / f"{prompt}.png"
         with open(image_path, "wb") as f:
             f.write(image_bytes)
 
@@ -114,7 +114,7 @@ def detect_qr_opencv(image_bytes) -> Tuple[bool, str | None]:
         
     qr_detector = cv2.QRCodeDetector()
     decoded_text, points, _ = qr_detector.detectAndDecode(image)
-    
+
     if points is None or decoded_text is None or decoded_text == "":
         valid = False
         decoded_text = None
@@ -174,7 +174,7 @@ def detect_qr_pyzbar(image_bytes) -> Tuple[bool, str | None]:
 class QReader:
     def __init__(self, threshold = 0.5, model_size = "s"):
         self.threshold = threshold
-        self.model_size = model_size
+        self.model_size = model_size # note model caching at build will only cache the small model
     
     @modal.build() # assuming it downloads and caches the model on load
     @modal.enter()
@@ -214,22 +214,22 @@ class QReader:
         decoded_text = decoded_text[0]
         return True, decoded_text
 
-# local entrypoint for sweeping through ./evals/data/detector
+# local entrypoint for sweeping through ./evals/data/scannability
 @app.local_entrypoint()
 def compare_detectors():
     # ensure detector set exists and is sorted
-    if not DETECTOR_SET.exists():
+    if not SCANNABILITY_SET.exists():
         return
     
     
     user_instruction = "Detector set must be manually sorted into /valid and /invalid folders based on iphone qr reads." # noqa: E501
 
-    unsorted = list(DETECTOR_SET.glob("*.png"))
+    unsorted = list(SCANNABILITY_SET.glob("*.png"))
     if len(unsorted) != 0:
         print(user_instruction)
 
-    valid_dir = DETECTOR_SET / "valid"
-    invalid_dir = DETECTOR_SET / "invalid"
+    valid_dir = SCANNABILITY_SET / "valid"
+    invalid_dir = SCANNABILITY_SET / "invalid"
 
     # ensure valid and invalid dirs exist
     if not valid_dir.exists() or not invalid_dir.exists():
@@ -256,13 +256,15 @@ def compare_detectors():
             invalid_img_bytes.append(f.read())
 
     # load our QReader detector, which is class-based so needs to pre-init
-    qreader = QReader()
+    qreader_s = QReader() # defaults to small model
+    qreader_n = QReader(model_size = "n") # nano model
 
     # map of detector functions. Must have the same function signatures!
     detectors = {
         "OpenCV": detect_qr_opencv, 
         "Pyzbar": detect_qr_pyzbar, 
-        "QReader": qreader.detect_and_decode
+        "QReader (Small)": qreader_s.detect_and_decode,
+        "QReader (Nano)": qreader_n.detect_and_decode
     }
 
     for detector_name, detector in detectors.items():
@@ -289,7 +291,7 @@ def compare_detectors():
         print(f"False Negatives: {false_negatives}")
 
 @app.local_entrypoint()
-def optimize_qreader_threshold():
+def optimize_qreader_threshold(size = "s"):
     # knowing that qreader has an adjustable threshold, 
     # we can use an optimization library to find the best threshold
     # this is likely overkill, but it's a fun exercise!
@@ -297,8 +299,8 @@ def optimize_qreader_threshold():
     import numpy as np
     from scipy.optimize import minimize
 
-    valid_dir = DETECTOR_SET / "valid"
-    invalid_dir = DETECTOR_SET / "invalid"
+    valid_dir = SCANNABILITY_SET / "valid"
+    invalid_dir = SCANNABILITY_SET / "invalid"
     valid_imgs = list(valid_dir.glob("*.png"))
     invalid_imgs = list(invalid_dir.glob("*.png"))
     valid_img_bytes = []
@@ -313,7 +315,7 @@ def optimize_qreader_threshold():
     def objective(threshold):
         threshold = threshold[0] # Scipy provides a tuple to objective func
         print(f"\nTesting threshold: {threshold:.3f}")
-        qreader = QReader(threshold = threshold)
+        qreader = QReader(threshold = threshold, model_size = size)
         true_positives = 0
         false_positives = 0
         true_negatives = 0
@@ -370,8 +372,8 @@ def optimize_qreader_threshold():
 def test_ensemble():
     # if we keep the OR of opencv and pyzbar, does that eliminate false negatives and get closer to iphone?
     
-    valid_dir = DETECTOR_SET / "valid"
-    invalid_dir = DETECTOR_SET / "invalid"
+    valid_dir = SCANNABILITY_SET / "valid"
+    invalid_dir = SCANNABILITY_SET / "invalid"
     valid_imgs = list(valid_dir.glob("*.png"))
     invalid_imgs = list(invalid_dir.glob("*.png"))
     valid_img_bytes = []
@@ -484,27 +486,176 @@ def detect_qr_ensemble(image_bytes) -> Tuple[bool, str | None]:
             print(f"Pyzbar and OpenCV decode to different texts, {pyz_barcodes[0].data.decode('utf-8')} and {opencv_decoded_text} returning false")
             return False, None
 
+DETECTION_TABLE_PATH = Path(__file__).parent / "evals" / "data" / "scannability" / "detection_table.json"
+QREADER_THRESHOLDS = [0.86, 0.88, 0.9, 0.92, 0.94, 0.96] 
+@app.local_entrypoint()
+def generate_detection_table():
+    import json
+    # Ensemble seems to improve! We're getting few false positives, but a lot of false negatives.
+    # The idea was raised to use yolo, only in the case of a negative, which means there's potential to do branching logic in our ensembling.
+    # Let's generate a table of all of our detections, so we can programmatically test which ensemble strategy is best.
+    valid_dir = SCANNABILITY_SET / "valid"
+    invalid_dir = SCANNABILITY_SET / "invalid"
+    valid_imgs = list(valid_dir.glob("*.png"))
+    invalid_imgs = list(invalid_dir.glob("*.png"))
+    valid_img_bytes = []
+    invalid_img_bytes = []
+    for valid_img in valid_imgs:
+        with open(valid_img, "rb") as f:
+            valid_img_bytes.append(f.read())
+    for invalid_img in invalid_imgs:
+        with open(invalid_img, "rb") as f:
+            invalid_img_bytes.append(f.read())
+
+    table = {
+        "iphone": [1] * len(valid_imgs) + [0] * len(invalid_imgs),
+    }
+    
+    # openCV
+    opencv_detected = []
+    for valid, _ in detect_qr_opencv.map(valid_img_bytes + invalid_img_bytes):
+        opencv_detected.append(1 if valid else 0)
+    table["opencv"] = opencv_detected
+
+    # pyzbar
+    pyzbar_detected = []
+    for valid, _ in detect_qr_pyzbar.map(valid_img_bytes + invalid_img_bytes):
+        pyzbar_detected.append(1 if valid else 0)
+    table["pyzbar"] = pyzbar_detected
+
+    # QReader at various thresholds
+    for threshold in QREADER_THRESHOLDS:
+        qreader_detected = []
+        qreader = QReader(threshold = threshold)
+        for valid, _ in qreader.detect_and_decode.map(valid_img_bytes + invalid_img_bytes):
+            qreader_detected.append(1 if valid else 0)
+        table[f"qreader@{threshold}"] = qreader_detected
+    
+    # save to file
+    with open(DETECTION_TABLE_PATH, "w") as f:
+        json.dump(table, f)
 
 @app.local_entrypoint()
-def eval_scannability():
-    # The official eval script for scannability
-    # We use the ensemble of opencv and pyzbar as our detector
+def score_detection_table():
+    import json
+    # load the detection table
+    with open(DETECTION_TABLE_PATH, "r") as f:
+        table = json.load(f)
 
-    prompts = [
-        "A cat in a hat",
-        # "A pirate ship birthday party",
-        # "A shiba inu drinking an americano",
-        # "Solarpunk architecture",
-    ]
+    # policies at each detected value
+    # we assume we only use one threshold of QReader
+    def policy_opencv(opencv, pyzbar, qreader):
+        return opencv
+    def policy_pyzbar(opencv, pyzbar, qreader):
+        return pyzbar
+    def policy_qreader(opencv, pyzbar, qreader):
+        return qreader
 
-    n = 10
+    # ensemble
+    def policy_opencv_pyzbar_ensemble(opencv, pyzbar, qreader):
+        if opencv == 1 or pyzbar == 1:
+            return 1
+        return 0
 
-    for prompt in prompts:
-        print(f"Prompt: {prompt}")
-        # use google as the qr url for now
-        for image_bytes in generate_image.starmap([(prompt, f"https://www.google.com")] * n):
-            valid, decoded_text = detect_qr_ensemble.remote(image_bytes)
-            if valid:
-                print(f"Valid QR code: {decoded_text}")
-            else:
-                print(f"Invalid QR code: {decoded_text}")
+    # tacking yolo only onto negatives
+    def policy_opencv_w_qreader_backup(opencv, pyzbar, qreader):
+        if opencv == 1:
+            return 1
+        return qreader
+    def policy_pyzbar_w_qreader_backup(opencv, pyzbar, qreader):
+        if pyzbar == 1:
+            return 1
+        return qreader
+    def policy_ensemble_w_qreader_backup(opencv, pyzbar, qreader):
+        if opencv == 1 or pyzbar == 1:
+            return 1
+        return qreader
+
+    # F-beta score
+    def calculate_fbeta_score(tp, fp, fn, beta=0.5):
+        """Calculate F-beta score with given beta value.
+        
+        beta < 1 weights precision more heavily than recall
+        beta > 1 weights recall more heavily than precision
+        beta = 1 weights precision and recall equally (standard F1 score)
+        """
+        precision = tp / (tp + fp) if (tp + fp) > 0 else 0
+        recall = tp / (tp + fn) if (tp + fn) > 0 else 0
+        
+        if precision == 0 and recall == 0:
+            return 0
+        
+        beta_squared = beta * beta
+        fbeta = ((1 + beta_squared) * precision * recall) / \
+                (beta_squared * precision + recall) if (beta_squared * precision + recall) > 0 else 0
+        
+        return fbeta, precision, recall
+    
+    # calculate stats for each policy
+    policy_scores = {}
+    for policy_name, policy in [
+        ("opencv", policy_opencv),
+        ("pyzbar", policy_pyzbar),
+        ("qreader", policy_qreader),
+        ("opencv_pyzbar_ensemble", policy_opencv_pyzbar_ensemble),
+        ("opencv_w_qreader_backup", policy_opencv_w_qreader_backup),
+        ("pyzbar_w_qreader_backup", policy_pyzbar_w_qreader_backup),
+        ("ensemble_w_qreader_backup", policy_ensemble_w_qreader_backup),
+        ]:
+        for threshold in QREADER_THRESHOLDS:
+            tp = 0
+            tn = 0
+            fp = 0
+            fn = 0
+            for i in range(len(table["iphone"])):
+                iphone = table["iphone"][i]
+                policy_score = policy(
+                    table["opencv"][i],
+                    table["pyzbar"][i],
+                    table[f"qreader@{threshold}"][i]
+                )
+                if iphone == 1:
+                    if policy_score == 1:
+                        tp += 1
+                    else:
+                        fn += 1
+                else:
+                    if policy_score == 1:
+                        fp += 1
+                    else:
+                        tn += 1
+            fbeta_score, precision, recall = calculate_fbeta_score(tp, fp, fn, beta=0.5)
+            policy_scores[policy_name + f"@{threshold}"] = {
+                "tp": tp,
+                "tn": tn,
+                "fp": fp,
+                "fn": fn,
+                "precision": precision,
+                "recall": recall,
+                "f0.5": fbeta_score,
+                "accuracy": (tp + tn) / (tp + tn + fp + fn),
+            }
+
+    # rank policies by score
+    ranked_policies = sorted(policy_scores.items(), key=lambda x: x[1]["accuracy"], reverse=True)
+    print("Top 5 policies by accuracy: TP + TN / (TP + TN + FP + FN)")
+    for policy_name, policy_score in ranked_policies[:5]:
+        print(f"{policy_name}: {policy_score}")
+    
+    # rank policies by precision
+    ranked_policies = sorted(policy_scores.items(), key=lambda x: x[1]["precision"], reverse=True)
+    print("\nTop 5 policies by precision: TP / (TP + FP)")
+    for policy_name, policy_score in ranked_policies[:5]:
+        print(f"{policy_name}: {policy_score}")
+
+    # rank policies by recall
+    ranked_policies = sorted(policy_scores.items(), key=lambda x: x[1]["recall"], reverse=True)
+    print("\nTop 5 policies by recall: TP / (TP + FN)")
+    for policy_name, policy_score in ranked_policies[:5]:
+        print(f"{policy_name}: {policy_score}")
+
+    # rank policies by F0.5
+    ranked_policies = sorted(policy_scores.items(), key=lambda x: x[1]["f0.5"], reverse=True)
+    print("\nTop 5 policies by F0.5:")
+    for policy_name, policy_score in ranked_policies[:5]:
+        print(f"{policy_name}: {policy_score}")

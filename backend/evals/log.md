@@ -28,7 +28,7 @@ As of 2:49pm oct 31 I'm working on pitting openCV against other methods for how 
 and idea I had, while doing the act of manually scanning, is that motion / angles were often helpful to get the iphone to detect the QR code, so if I can't get to good detection immediately with openCV or alternative libraries/methods, the next thing to try is to use image augmentation to warp the images in ways that maybe help the library detect it better (skewing, bluring, rotating, etc.) and accept it if any of the augmentations pass.
 
 Day 4:
-`modal run eval.compare_detectors`
+`modal run eval_scannability.compare_detectors`
 Nov 1, I tested three methods: openCV, pyzbar, QReader. Here's the first two:
 Scores:
 ```
@@ -78,7 +78,7 @@ In fact, something we can optionally do here is use openCV or pyzbar as a proxy 
 New quest! QReader is a YOLO model, so we can actually adjust its confidence threshold to dial in on the perfect representation of iphone scans.
 
 Add config to qreader class, then PID loop to optimize it.
-`modal run eval.optimize_qreader_threshold`
+`modal run eval_scannability.optimize_qreader_threshold`
 
 Day 5:
 Strangely, grid search and optimizing the confidence threshold between 0.5 to 0.99 didn't change the score much at all.
@@ -217,3 +217,195 @@ False Negatives: 73
 Score:           0.426
 ```
 
+Return to hyperparm sweep on the yolo model, but with the nano model.
+
+```
+Testing threshold: 0.500
+True Positives:  110
+False Positives: 19
+True Negatives:  0
+False Negatives: 0
+Score:           0.853
+
+Testing threshold: 0.570
+True Positives:  110
+False Positives: 19
+True Negatives:  0
+False Negatives: 0
+Score:           0.853
+
+Testing threshold: 0.640
+True Positives:  110
+False Positives: 19
+True Negatives:  0
+False Negatives: 0
+Score:           0.853
+
+Testing threshold: 0.710
+True Positives:  110
+False Positives: 19
+True Negatives:  0
+False Negatives: 0
+Score:           0.853
+
+Testing threshold: 0.780
+True Positives:  110
+False Positives: 19
+True Negatives:  0
+False Negatives: 0
+Score:           0.853
+
+Testing threshold: 0.850
+True Positives:  108
+False Positives: 19
+True Negatives:  0
+False Negatives: 2
+Score:           0.837
+
+Testing threshold: 0.920
+True Positives:  66
+False Positives: 11
+True Negatives:  8
+False Negatives: 44
+Score:           0.574
+
+Testing threshold: 0.990
+True Positives:  0
+False Positives: 0
+True Negatives:  19
+False Negatives: 110
+Score:           0.147
+```
+
+Fuck it, ensemble. Don't have time to figure out yolo model. Need to focus on aesthetic preference.
+
+todo: check if we can pass 
+img -> ensemble 
+    (positive)->done 
+    (negative)->yolo@0.92->done
+yolo introduces false positives, but since ensemble has such a low rate of false positives, we use that as the first line of defense, capturing the (37 + 1) / (37 + 1 + 73 + 18) = 29.5% of positives. The remaining 70% are at the mercy of yolo, which is going to introduce some shit but possibly at the benefit of adding more true positives.
+
+todo: generate this table
+Iphone    1, 1, 1, 1, ... 0, 0
+OpenCV    1, 0, 1, 1, ... 0, 0
+Pyzbar    0, 0, 1, 1, ... 0, 0
+Yolo@0.5  1, 1, 1, 1, ... 1, 1
+Yolo@0.92 0, 0, 1, 1, ... 1, 1
+
+Can maybe mathematically calculate the scores of different ensembles
+
+Then move on to aesthetic preference.
+
+Table:
+```
+{
+    "iphone":       [1, 1, 1, 1, 1, 1, ...],
+    "opencv":       [1, 0, 0, 0, 1, 0, ...],
+    "pyzbar":       [0, 0, 0, 0, 0, 1, ...],
+    "qreader@0.86": [1, 1, 1, 1, 1, 1, ...],
+    "qreader@0.88": [1, 1, 1, 1, 1, 1, ...],
+    "qreader@0.9":  [1, 1, 1, 1, 1, 1, ...],
+    "qreader@0.92": [1, 1, 1, 1, 1, 1, ...],
+    "qreader@0.94": [1, 0, 1, 1, 1, 1, ...],
+    "qreader@0.96": [0, 0, 0, 0, 0, 0, ...]
+}
+```
+
+Then calculating score for various policies, we can rank them by various metrics:
+```
+Top 5 policies by accuracy:
+qreader@0.86: {'tp': 107, 'tn': 0, 'fp': 19, 'fn': 3, 'precision': 0.8492063492063492, 'recall': 0.9727272727272728, 'f0.5':
+0.8713355048859934, 'accuracy': 0.8294573643410853}
+opencv_w_qreader_backup@0.86: {'tp': 107, 'tn': 0, 'fp': 19, 'fn': 3, 'precision': 0.8492063492063492, 'recall':
+0.9727272727272728, 'f0.5': 0.8713355048859934, 'accuracy': 0.8294573643410853}
+pyzbar_w_qreader_backup@0.86: {'tp': 107, 'tn': 0, 'fp': 19, 'fn': 3, 'precision': 0.8492063492063492, 'recall':
+0.9727272727272728, 'f0.5': 0.8713355048859934, 'accuracy': 0.8294573643410853}
+ensemble_w_qreader_backup@0.86: {'tp': 107, 'tn': 0, 'fp': 19, 'fn': 3, 'precision': 0.8492063492063492, 'recall':
+0.9727272727272728, 'f0.5': 0.8713355048859934, 'accuracy': 0.8294573643410853}
+qreader@0.88: {'tp': 106, 'tn': 0, 'fp': 19, 'fn': 4, 'precision': 0.848, 'recall': 0.9636363636363636, 'f0.5':
+0.8688524590163934, 'accuracy': 0.8217054263565892}
+
+Top 5 policies by precision:
+opencv@0.86: {'tp': 21, 'tn': 19, 'fp': 0, 'fn': 89, 'precision': 1.0, 'recall': 0.19090909090909092, 'f0.5':
+0.5412371134020618, 'accuracy': 0.31007751937984496}
+opencv@0.88: {'tp': 21, 'tn': 19, 'fp': 0, 'fn': 89, 'precision': 1.0, 'recall': 0.19090909090909092, 'f0.5':
+0.5412371134020618, 'accuracy': 0.31007751937984496}
+opencv@0.9: {'tp': 21, 'tn': 19, 'fp': 0, 'fn': 89, 'precision': 1.0, 'recall': 0.19090909090909092, 'f0.5':
+0.5412371134020618, 'accuracy': 0.31007751937984496}
+opencv@0.92: {'tp': 21, 'tn': 19, 'fp': 0, 'fn': 89, 'precision': 1.0, 'recall': 0.19090909090909092, 'f0.5':
+0.5412371134020618, 'accuracy': 0.31007751937984496}
+opencv@0.94: {'tp': 21, 'tn': 19, 'fp': 0, 'fn': 89, 'precision': 1.0, 'recall': 0.19090909090909092, 'f0.5':
+0.5412371134020618, 'accuracy': 0.31007751937984496}
+
+Top 5 policies by recall:
+qreader@0.86: {'tp': 107, 'tn': 0, 'fp': 19, 'fn': 3, 'precision': 0.8492063492063492, 'recall': 0.9727272727272728, 'f0.5':
+0.8713355048859934, 'accuracy': 0.8294573643410853}
+opencv_w_qreader_backup@0.86: {'tp': 107, 'tn': 0, 'fp': 19, 'fn': 3, 'precision': 0.8492063492063492, 'recall':
+0.9727272727272728, 'f0.5': 0.8713355048859934, 'accuracy': 0.8294573643410853}
+pyzbar_w_qreader_backup@0.86: {'tp': 107, 'tn': 0, 'fp': 19, 'fn': 3, 'precision': 0.8492063492063492, 'recall':
+0.9727272727272728, 'f0.5': 0.8713355048859934, 'accuracy': 0.8294573643410853}
+ensemble_w_qreader_backup@0.86: {'tp': 107, 'tn': 0, 'fp': 19, 'fn': 3, 'precision': 0.8492063492063492, 'recall':
+0.9727272727272728, 'f0.5': 0.8713355048859934, 'accuracy': 0.8294573643410853}
+qreader@0.88: {'tp': 106, 'tn': 0, 'fp': 19, 'fn': 4, 'precision': 0.848, 'recall': 0.9636363636363636, 'f0.5':
+0.8688524590163934, 'accuracy': 0.8217054263565892}
+
+Top 5 policies by F0.5:
+qreader@0.86: {'tp': 107, 'tn': 0, 'fp': 19, 'fn': 3, 'precision': 0.8492063492063492, 'recall': 0.9727272727272728, 'f0.5':
+0.8713355048859934, 'accuracy': 0.8294573643410853}
+opencv_w_qreader_backup@0.86: {'tp': 107, 'tn': 0, 'fp': 19, 'fn': 3, 'precision': 0.8492063492063492, 'recall':
+0.9727272727272728, 'f0.5': 0.8713355048859934, 'accuracy': 0.8294573643410853}
+pyzbar_w_qreader_backup@0.86: {'tp': 107, 'tn': 0, 'fp': 19, 'fn': 3, 'precision': 0.8492063492063492, 'recall':
+0.9727272727272728, 'f0.5': 0.8713355048859934, 'accuracy': 0.8294573643410853}
+ensemble_w_qreader_backup@0.86: {'tp': 107, 'tn': 0, 'fp': 19, 'fn': 3, 'precision': 0.8492063492063492, 'recall':
+0.9727272727272728, 'f0.5': 0.8713355048859934, 'accuracy': 0.8294573643410853}
+qreader@0.88: {'tp': 106, 'tn': 0, 'fp': 19, 'fn': 4, 'precision': 0.848, 'recall': 0.9636363636363636, 'f0.5':
+0.8688524590163934, 'accuracy': 0.8217054263565892}
+```
+
+Where Precision: "When we say a QR is scannable, how often are we right?"
+Where Recall:    "Out of all scannable QRs, what portion do we correctly identify?"
+F-beta Score = (1 + β²) * (precision * recall) / (β² * precision + recall)
+
+Combines precision and recall into a single score
+β controls the weight between precision and recall:
+
+β = 1: F1 score, weights precision and recall equally
+β = 0.5: F0.5 score, weights precision 2x more than recall
+
+Issue we now have: there aren't enough invalid QRs to get a proper calculation.
+For example, QReader's 85% precision (107/(107+19)) is actually worse than it looks. Random guessing would give you 85% precision just from the class imbalance.
+
+TODO: determine which metrics we care most about.
+
+### Measurement - Aesthetic Preference
+We also want a way to eval aesthetic preference.
+This will follow the same exact workflow as scannability:
+- Build up a ground truth dataset of images
+  - Manually sort them into aesthetic preference buckets. We don't have an iphone as ground truth for this one, so we'll just have to be subjective. What's important is maintaining a consistent preference.
+- Experiment with different methods to detect aesthetic preference, and find the one(s) the most closely match our own preference.
+
+I reused the images from scannability to save some time, which were generated using randomized adjectives and nouns.
+Most of them were bad, a horrible mashup of randon concepts (as expected), so I only found 9 of the 129 that felt even close to aesthetic. While manually sorting, I found that the things I considered most aesthetic often:
+- Contained complete objects
+- Were three dimensional in a way where the QR code wasn't just a flat rectangle, but built across objects at varying depths. Great example was one with a candle in the foreground that was the lower left anchor square of the QR, or the glass of tea with a reflection on the glass that served as a data rectangle in the QR, or a playground where the upper half of the QR was a house in the background.
+
+We need far more positive examples, so I'm going to tweak the prompt to try to hit those same aesthetic traits that I liked.
+```
+prompt = f"A {adjective1} {noun1}, 3D render in blender, trending on artstation, uses depth to trick the eye, colorful, high resolution, 8k, cinematic, concept art, illustration, painting, modern"
+```
+Generated 10 test images with this prompt, all were bad aesthetics. Need to get more specific to try to get better results.
+This did great! Some bangers were:
+- A hillside italian city, vivid colors and shadows, with a church tower and bustling fishing port.
+- Ancient temple ruins with stone archways and columns at different depths, sunbeams streaming through gaps, moss-covered stonework.
+- Busy night market with food stalls, lanterns, and crowds creating natural depth layers.
+- Japanese zen garden with wooden bridges at different levels, stone lanterns, and a pagoda in the background.
+- Underground metro station with multiple platforms, escalators, and geometric ceiling patterns.
+Regenerating
+
+After a few iterations, we're getting even better results that made me bump previous "good" results into "bad" buckets since the new stuff is so good.
+The new stuff isn't scannable, but this is for aesthetic preference, so it doesn't matter.
+
+In fact, let's reduce the strength of the controlnet to get even more aesthetic results!
+Lowering controlnet_conditioning_scale to 1.0 from 1.5. This means we're reducing the relative weight of the controlnet, making it less influential on the image. This ended up just producing a semi-transparent QR code on top of the image. See scrap directory for examples.
+
+Tried at 1.3, much better. Moving on to aesthetic preference models for our evals.
