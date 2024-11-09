@@ -294,8 +294,6 @@ Yolo@0.92 0, 0, 1, 1, ... 1, 1
 
 Can maybe mathematically calculate the scores of different ensembles
 
-Then move on to aesthetic preference.
-
 Table:
 ```
 {
