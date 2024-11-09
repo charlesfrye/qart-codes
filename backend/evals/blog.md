@@ -1,54 +1,73 @@
-The following is a sloppy first pass, all writing,  minimal. Any mistakes will just be continued.
+The following is a sloppy first pass.
 
 # Building Evals for Image Generation
-Define evals. Compare to tests. Talk about how evals are different dimensions to maximize based on our priorities. 
+Over the last few years, the Data and ML field has seen an influx of people from traditional software engineering backgrounds. As they go to build products backed by generative models, they're faced with a daunting word:
 
-Evals are used for experimentation; the continuous challenge to push the numbers up. Evals aren't pass/fail, they're a spectrum.
+Evals.
 
-Evals can also be used for quality control; similar to software tests, ensuring that your new experiments wouldn't regress production if merged.
+As one of those people, I can attest. The goal of this blog is to demystify evals, and show the real steps that one could go through to build evals for an image generation model.
 
-To have good evals, we need:
-1. a way to measure the output of our models relative to what is "correct"
-2. a way to record and reproduce these scores over time, so we can bravely experiment with new models / codebases and revert.
+### How to think about evals
 
-But in practice, they can be anything that measures correctness or quality! This is the thing to demystify. Evals are just code, code that you can write, no fancy witchcraft, to assess the correctness of an output. You can even use other models to eval your models, something you'll see multiple times in this blog.
+Evals are how data teams quantitatively measure the performance of their models. 
 
-### Our project
-We've built an aesthetic QR code generator. It's an image diffusion service that uses a [controlnet](link) model alongside the diffusion model to take a functioning QR code and guide the image generation toward that code.
+Evals are to data teams as testing in CI is to software engineers. The critical difference is that unlike test, evals are not strictly pass/fail; each one is meant to quantify the model's performance on a certain dimension.
 
-### What is the outcome?
-In its most basic form, running an eval against a model will produce a score. 
-
-That score lies on some spectrum such as a 0-100% range. If an eval scores 50%, that means the model's output passed 50% of the tests. If a model scores 100%, that means it is perfect in the eyes of that eval, and it may be time to build a harder to pass eval!
-
-A term you'll come across often is the `pass@n` metric. This is the percentage of tests the model passed when given `n` attempts at teach test.
-
-So `pass@1=50` means that given a set of tests, the model was ran once per test and for 50% of the tests it passed.
-`pass@3=99` means that given a set of tests, the model ras ran three times per test, and for 99% of the tests, at least one of those three attempts pass.
-
-Ideally, each eval is narrowly scoped to test a certain dimension of performance. Think of each eval as a stat on a character stat sheet.
+Think of each eval as a stat on a character stat sheet.
 
 [insert character customizeation screen with sliders]
 
-Taking LLM evals as an example, some common evals have surfaced with these narrow scopes:
+Taking LLM evals as an example, some standard evals are:
 
 HumanEval: Tests the "coding ability" stat
 GSM8K: Tests the "mathematical reasoning" stat
 MMLU: Tests the "knowledge (science, history, law, medicine, ethics, etc)" stat 
 HellaSwag: Tests the "social intelligence" stat
 
+Evals are used for experimentation; the continuous challenge to push the numbers up.
+
+Evals can also be used for quality control; similar to software tests, ensuring that your new experiments wouldn't regress production if merged.
+
+When you actually look at their code, you'll see that they can be anything that measures correctness or quality! This is the thing to demystify. Evals are just code, code that you can write, no fancy witchcraft, to assess the correctness of an output. You can even use other models to eval your models, something you'll see multiple times in this blog.
+
+### Our project
+We've built an aesthetic QR code generator. 
+
+[Qart](link)
+
+It's an image diffusion service that uses a [controlnet](link) model alongside the diffusion model to take a functioning QR code and guide the image generation toward that code.
+
+### What is the outcome?
+In its most basic form, running an eval against our model will produce a score. 
+
+That score lies on some spectrum such as a 0-100% range. If an eval scores 50%, that means the model's output passed 50% of the tests. If a model scores 100%, that means it's time to find a harder eval!
+
+A term you'll come across often is the `pass@n` metric. This is the percentage of tests the model passed when given `n` attempts at teach test.
+
+So `pass@1=50` means that given a set of tests, the model was ran once per test and for 50% of the tests it passed.
+`pass@3=99` means that given a set of tests, the model ras ran three times per test, and for 99% of the tests, at least one of those three attempts pass.
+
+Ideally, each eval is narrowly scoped to test a certain dimension of performance.
+
 In our case, we have two stats to measure:
 1. QR Code scannability and accuracy: does the generated image actually scan? 
 2. Aesthetics: is the generated image aesthetic or not?
 
-And it's all down to our own project goals to decide how to balance these. Because while not mutually exclusive, specializing a model in one metric often makes it worse at others. So do we max out the QR code scannabilty stat, at the risk of making the images bland?
-Or do we max out the aesthetics, and risk having mostly unscannable codes? Or how can we get the best of both?
+And it's all down to our own project goals to decide how to balance these. Because while not mutually exclusive, specializing a model in one metric often makes it worse at others. 
 
-But that's a question for you with your project, and a question you'll see us explore as we implement our evals.
+Do we max out the QR code scannabilty stat, at the risk of making the images bland?
+Or do we max out the aesthetics, and risk having mostly unscannable codes? 
+Or how can we get the best of both?
+
+This is a question question you'll see us explore as we implement our evals.
 
 ## Building our Evals
 
-Again, we're building two evals:
+To have good evals, we need:
+1. a way to measure the output of our model relative to what is "correct"
+2. a way to record and reproduce these scores over time, so we can bravely experiment with new models / codebases and revert.
+
+Let's start with measurement. We'll be building two evals:
 1. QR Code scannability
 2. Aesthetics
    
@@ -100,7 +119,9 @@ Note that in an ideal world, we'd aim for a 50/50 split of valid to invalid.
 ### Experimenting with QR scanners
 
 ### OpenCV
-`detect_qr_opencv` uses qr detection built into OpenCV. This is when I first realized that emulating iphone scan ability will be harder than expected. 
+`detect_qr_opencv` uses the qr detection library built into OpenCV.
+
+I took the manually labeled dataset, and passed the images through OpenCV to see if it detected what the iphone did. This is when I first realized that emulating iphone scan ability will be harder than expected. 
 
 OpenCV yielded:
 ```
@@ -264,7 +285,7 @@ But we still have plenty of false negatives, so let's try something new: `condit
 This is where we only ensemble with another detector if the first detector returns negative. Note that this `conditional ensembling` is not some well-known evals term that you were too stupid to know. We literally invented it after looking at the above data asking: how do we make these numbers better? Again, evals are just code you write, no need to be intimidated by them.
 
 ### Finding the best ensemble
-The opencv + pyzbar ensemble worked great, but if we add qreader into the mix again, there are too many combinations of thresholds we could use for use to eye it. Let's calculate it.
+The opencv + pyzbar ensemble worked great, but if we add qreader into the mix again, there are too many combinations of thresholds we could use for us to easily logic through it. So let's calculate it.
 
 I wrote a script that mapped out our different detectors (including the iphone) and their detections into binary. This includes qreader of various thresholds centered around the critical 0.92 confidence threshold that we'd previously seen be the tipping point in qreader.
 `modal run eval_scannability::generate_detection_table`
