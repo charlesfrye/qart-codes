@@ -204,8 +204,10 @@ def run_evals():
     scannability_score = scannability_future.get()
     return aesthetics_score, scannability_score
 
+# from qart root:
+# modal run backend.evals.evals
 @app.local_entrypoint()
-def evals():
+def run():
     # For experiment tracking
     import wandb
     wandb_run = wandb.init(
