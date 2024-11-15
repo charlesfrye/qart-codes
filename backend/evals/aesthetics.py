@@ -6,7 +6,9 @@ import os
 from .common import app, generate_image
 
 AESTHETICS_SET = Path(__file__).parent /  "data" / "aesthetics"
+os.makedirs(AESTHETICS_SET, exist_ok=True)
 SCANNABILITY_SET = Path(__file__).parent /  "data" / "scannability"
+os.makedirs(SCANNABILITY_SET, exist_ok=True)
 
 # we just share the same image across detectors
 image = (modal.Image.debian_slim()
@@ -323,6 +325,8 @@ def generate_aesthetics_set_manual():
 def compare_aesthetics_predictors():
     good_dir = AESTHETICS_SET / "good"
     bad_dir = AESTHETICS_SET / "bad"
+    if not good_dir.exists() or not bad_dir.exists():
+        print("Please manually sort the images into good and bad buckets")
     good_imgs = list(good_dir.glob("*.png"))
     bad_imgs = list(bad_dir.glob("*.png"))
 

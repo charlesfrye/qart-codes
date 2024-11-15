@@ -1,10 +1,12 @@
 import modal
 from pathlib import Path
 from typing import Tuple
+import os
 
 from .common import app, generate_image
 
 SCANNABILITY_SET = Path(__file__).parent /  "data" / "scannability"
+os.makedirs(SCANNABILITY_SET, exist_ok=True)
 
 # we just share the same image across detectors
 image = (modal.Image.debian_slim().
