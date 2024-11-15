@@ -109,7 +109,6 @@ def run_aesthetics_eval(generated_images):
 @app.function(image=runner_image, timeout=30 * MINUTE)
 def run_scannability_eval(generated_images):
     import numpy as np
-    from eval_scannability import detect_qr_ensemble
 
     # split into sets of K_SAMPLES
     tests = [generated_images[i:i+K_SAMPLES] for i in range(0, len(generated_images), K_SAMPLES)]
