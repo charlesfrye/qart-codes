@@ -407,3 +407,19 @@ In fact, let's reduce the strength of the controlnet to get even more aesthetic 
 Lowering controlnet_conditioning_scale to 1.0 from 1.5. This means we're reducing the relative weight of the controlnet, making it less influential on the image. This ended up just producing a semi-transparent QR code on top of the image. See scrap directory for examples.
 
 Tried at 1.3, much better. Moving on to aesthetic preference models for our evals.
+
+
+
+--
+
+Add https://huggingface.co/camenduru/improved-aesthetic-predictor/blob/main/simple_inference.py as a module imported serverside. It scores aesthetics on an image, giving a seemingly 0-10 score.
+
+Pass/fail on this could be a threshold, so lets plot out histograms of the scores for good and bad images and see if there's a clear threshold between them.
+
+Thankfully there is a visible separation between the two buckets. Significant overlap, but we can choose a threshold leaning toward the good side, because we prefer false negatives over false positives.
+
+Let's cut it off at 6.
+
+Time to build the eval.
+
+Eval built!

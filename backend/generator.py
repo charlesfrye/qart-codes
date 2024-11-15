@@ -42,7 +42,7 @@ CONFIG = InferenceConfig()
     secrets=[modal.Secret.from_name("huggingface")],
     # keep_warm=1,
     container_idle_timeout=1200,
-    # allow_concurrent_inputs=10,
+    concurrency_limit=8, # limit to 8 replicas to avoid GPU quota exhaustion when using other GPU services like evals
 )
 class Model:
     def setup(self, with_cuda=False):
