@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Tuple
 import modal
+import time
 from common import app
 from generator import Model
 from eval_aesthetics import ImprovedAestheticPredictor
@@ -203,6 +204,8 @@ def run_evals():
     # wait for evals to finish
     aesthetics_score = aesthetics_future.get()
     scannability_score = scannability_future.get()
+
+    time.sleep(1) # let logs finish printing
 
     print("Evals complete!")
     print("N_TESTS:", N_TESTS)
