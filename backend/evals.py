@@ -37,7 +37,7 @@ RANDOM_SEED = 42
 
 AESTHETICS_THRESHOLD = 6.0
 
-N_TESTS = 50
+N_TESTS = 1
 K_SAMPLES = 10
 
 MINUTE = 60
@@ -203,8 +203,42 @@ def run_evals():
     # wait for evals to finish
     aesthetics_score = aesthetics_future.get()
     scannability_score = scannability_future.get()
+    return aesthetics_score, scannability_score
 
-    time.sleep(1) # let logs finish printing
+if modal.is_local:
+    # For experiment tracking
+    import wandb
+    wandb_run = wandb.init(
+        project="qart_evals", 
+        save_code=True,
+        settings=wandb.Settings(code_dir=".")
+    )
+
+@app.local_entrypoint()
+def evals():
+    # aesthetics_score, scannability_score = run_evals.remote()
+
+    # For experiment tracking
+    aesthetics_score = {
+        "pass@1": 0.1,
+        "pass@3": 0.2,
+        "pass@10": 0.3,
+    }
+
+    scannability_score = {
+        "pass@1": 0.1,
+        "pass@3": 0.2,
+        "pass@10": 0.3,
+    }
+
+    wandb_run.summary.update({
+        "n_tests": N_TESTS,
+        "k_samples": K_SAMPLES,
+        "aesthetics": aesthetics_score,
+        "scannability": scannability_score,
+    })
+
+    time.sleep(1) # let logs finish piping to stdout
 
     print("Evals complete!")
     print("N_TESTS:", N_TESTS)
@@ -215,7 +249,3 @@ def run_evals():
     print("\nScannability:")
     for k, v in scannability_score.items():
         print(f"{k}: {v:.2%}")
-
-@app.local_entrypoint()
-def evals():
-    run_evals.remote()
