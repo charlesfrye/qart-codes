@@ -37,7 +37,7 @@ RANDOM_SEED = 42
 
 AESTHETICS_THRESHOLD = 6.0
 
-N_TESTS = 1
+N_TESTS = 50
 K_SAMPLES = 10
 
 MINUTE = 60
@@ -205,7 +205,8 @@ def run_evals():
     scannability_score = scannability_future.get()
     return aesthetics_score, scannability_score
 
-if modal.is_local:
+@app.local_entrypoint()
+def evals():
     # For experiment tracking
     import wandb
     wandb_run = wandb.init(
@@ -214,22 +215,7 @@ if modal.is_local:
         settings=wandb.Settings(code_dir=".")
     )
 
-@app.local_entrypoint()
-def evals():
-    # aesthetics_score, scannability_score = run_evals.remote()
-
-    # For experiment tracking
-    aesthetics_score = {
-        "pass@1": 0.1,
-        "pass@3": 0.2,
-        "pass@10": 0.3,
-    }
-
-    scannability_score = {
-        "pass@1": 0.1,
-        "pass@3": 0.2,
-        "pass@10": 0.3,
-    }
+    aesthetics_score, scannability_score = run_evals.remote()
 
     wandb_run.summary.update({
         "n_tests": N_TESTS,
