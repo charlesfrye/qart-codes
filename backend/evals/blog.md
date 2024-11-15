@@ -42,10 +42,10 @@ In its most basic form, running an eval against our model will produce a score.
 
 That score lies on some spectrum such as a 0-100% range. If an eval scores 50%, that means the model's output passed 50% of the tests. If a model scores 100%, that means it's time to find a harder eval!
 
-A term you'll come across often is the `pass@n` metric. This is the percentage of tests the model passed when given `n` attempts at teach test.
+A term you'll come across often is the `pass@k` metric. This is the percentage of tests the model passed when given `k` samples generated for each test.
 
 So `pass@1=50` means that given a set of tests, the model was ran once per test and for 50% of the tests it passed.
-`pass@3=99` means that given a set of tests, the model ras ran three times per test, and for 99% of the tests, at least one of those three attempts pass.
+`pass@3=99` means that given a set of tests, the model was ran three times per test, and for 99% of the tests, at least one of those three attempts pass.
 
 Ideally, each eval is narrowly scoped to test a certain dimension of performance.
 
@@ -449,7 +449,85 @@ https://huggingface.co/camenduru/improved-aesthetic-predictor
 
 This model uses the CLIP image embedding model fed into a custom neaural net, and trained on the AVA (Aesthetic Visual Analysis) dataset.
 
-The huggingface model wasn't usable out-of-the-box, so we had to rework it into our own library, found in `aesthetics.py`
+The huggingface model wasn't usable out-of-the-box, so we had to rework it into our own library, found in `aesthetics.py`. We move the imports into the functions (to avoid importing locally), and then wrap the model in a [Modal class](link) ImprovedAestheticPredictor, so we can run it on GPUs.
 
+The output of this model is a score between 0-10, with 10 being the most aesthetic. If the model is representative of our own aesthetic tastes, we'll be able to run our sorted good and bad images through it, and see a clear difference in the scores.
 
-As of time of writing this blog draft, this is the farthest I've gotten.
+Let's do that! 
+
+`modal run backend.evals.aesthetics::compare_aesthetics_predictions`
+
+The above script scores our sorted images, and then plots them by good/bad class into this histogram:
+[aesthetics_scores.png here]
+
+We love to see a graph like this. Specifically:
+1. The data for the good and bad buckets each form a bell curve, meaning our aesthetic preference model is actually doing something. (todo: this feels like a dumb statement that'd get us flamed by data folks, needs editing)
+2. The bell curves are offset from each other, with the bulk of the good images scoring higher than the bad images. This is a clear sign that our model aligns with our aesthetic preferences.
+
+Note that the graph isn't perfect, and there's plenty of overlap between the good and bad buckets. 
+
+In an ideal world, with no overlap, we could just select a threshold between the two, and have no false predictions; Anything above threshould would be a true positive, and anything below threshold would be a true negative.
+
+But in our case, we do have overlap, so choosing a threshold in that overlap will introduce false positives and negatives. Choose high, you'd reduce false positives (fewer bad images fall above the threshold), but you'd increase false negatives (more good images fall below the threshold). Choose low, you'd increase false positives, but you'd reduce false negatives.
+
+ Thankfully, we can choose what matters most to our QR Code usecase. As we continue to iterate on our model, we want our QRs to become more aesthetically pleasing, so it doesn't hurt to have a high bar.
+
+ Eyeballing the graph, let's choose a threshold of 6.0. The majority of good images fall above this threshold, and fewer than 15% of bad images do.
+
+ ## Putting it all together
+
+ Now, we finally get to write the code that runs the evals on newly generated images, and evaluates the performance of those generations.
+
+ This is the holy script. The test we'll run on every iteration of the model and inference codebase in order to measure if we're progressing or regressing our product.
+
+ Remember: Models are temporary. Evals are forever.
+ [insert charles photo here]
+
+In `evals/evals.py`, we write a `run_evals` function that does the following:
+1. Chooses a quantity of tests to run (N_TESTS). A test is a unique prompt + QR code combo.
+2. Chooses a quantity of images to generate per test (N_SAMPLES). We generate multiple images for each test so we can calculate pass@k metrics.
+3. Generates N_TESTS * N_SAMPLES images in parallel, using the `generate_image` function we'd previously written.
+4. Groups those images into N_TESTS batches, and runs the `run_aesthetics_eval` and `run_scannability_eval` functions on each batch, which use `detect_qr_ensemble` and `ImprovedAestheticPredictor`. This returns a dictionary of pass@k metrics for each test.
+5. Averages the pass@k metrics across all tests.
+
+For example, if we set N_SAMPLES=3, the eval could output logs like:
+```
+Scannability Test 1:
+Passed: [1, 0, 0]
+Samples passed: 1/3
+Estimated pass@1: 33.33%
+Estimated pass@3: 100.00%
+Estimated pass@10: 100.00%
+```
+For a single test (of many), we'd see that of three samples generated from the same prompt / QR combo, one passed.
+
+So for pass@1, if we were looking at just one image, 33% chance that we select the one that passed the scannability test.
+
+And for pass@3, if we were looking at three images, 100% chance that one of them passed the scannability test.
+
+For pass@10, we didn't generate 10 images, but since one of just three passed, that's a 100% chance that one of ten would pass.
+
+This calculation is made across all tests, and then averaged into our final score.
+
+## Experiment tracking
+
+Evals are a form of exploration and experimentation. Yet many teams learn the following lesson the hard way:
+
+Track your evals. Track the exact code and model used to get those results.
+
+Since you're going to be iterating quickly on your model and inference codebase, you'l want to be able to easily backtrack to your highest performing version. 
+
+I've seen first-hand the pains of getting incredible evals, and failing to reproduce them. You don't want this.
+
+We use [Weights & Biases](link) to track our eval runs. Weights and Biases is a tool for experiment tracking, and is integrated with very few lines of code. With it comes:
+
+A dashboard to visualize your runs
+[insert screenshot here]
+
+And a code-saving tool that takes your code in the exact state it was at the time of the run and saves it as an artifact on the run. (todo: make this work, it's currently broken)
+
+Combined, you now have the tools to fearlessly experiment on new models, new prompts, new sampling code, anything inference related, and easily backtrack to your best performing version.
+
+## Conclusion
+
+(todo: write this)

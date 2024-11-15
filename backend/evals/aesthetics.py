@@ -322,7 +322,7 @@ def generate_aesthetics_set_manual():
             f.write(image_bytes)
 
 @app.local_entrypoint()
-def compare_aesthetics_predictors():
+def compare_aesthetics_predictions():
     good_dir = AESTHETICS_SET / "good"
     bad_dir = AESTHETICS_SET / "bad"
     if not good_dir.exists() or not bad_dir.exists():
