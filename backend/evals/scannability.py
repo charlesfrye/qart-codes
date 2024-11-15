@@ -1,11 +1,10 @@
+import modal
 from pathlib import Path
 from typing import Tuple
-import modal
-from common import app
 
-from generator import Model
+from .common import app, generate_image
 
-SCANNABILITY_SET = Path(__file__).parent /  "evals" / "data" / "scannability"
+SCANNABILITY_SET = Path(__file__).parent /  "data" / "scannability"
 
 # we just share the same image across detectors
 image = (modal.Image.debian_slim().
@@ -13,33 +12,74 @@ image = (modal.Image.debian_slim().
     pip_install("opencv-python", "qrcode", "pillow", "pyzbar", "qreader")
 )
 
-# shared function for generating qr code image
-@app.function(
-    image=image, 
-    # concurrency_limit=1
-)
-def generate_image(prompt: str, qr_url: str) -> bytes:
+################################################################################
+# Scannability eval
+# Below is the best scannability eval function we landed on.
+# See lower in this file for experiments run to choose this.
+################################################################################
 
-    import base64
-    import io
-    import qrcode
+@app.function(image=image, allow_concurrent_inputs=100)
+def detect_qr_ensemble(image_bytes) -> Tuple[bool, str | None]:
+    import cv2
+    import os
+    from uuid import uuid4
+    from pyzbar import pyzbar
 
-    # produces pil image from url
-    image = qrcode.make(qr_url) 
-    buffer = io.BytesIO()
-    image.save(buffer, format="PNG")
-    image_bytes = buffer.getvalue()
+    # lazy way to convert bytes to opencv image by writing to tmp file
+    # we allow concurrent inputs, so use uuid for the file to avoid collisions
+    uuid = str(uuid4())
+    tmp_path = f"tmp_{uuid}.png"
+    with open(tmp_path, "wb") as f:
+        f.write(image_bytes)
+    image = cv2.imread(tmp_path)
+    os.remove(tmp_path)
 
-    # put into base64 (format expected by modal)
-    image_base64 = base64.b64encode(image_bytes).decode("utf-8")
+    if image is None:
+        valid = False
+        decoded_text = None
+        return valid, decoded_text  
 
-    # generate image
-    model = Model()
-    image_bytes = model.generate.remote(prompt, image_base64)
+    # OpenCV
+    qr_detector = cv2.QRCodeDetector()
+    opencv_decoded_text, opencv_points, _ = qr_detector.detectAndDecode(image)
+    opencv_detected = opencv_points is not None and opencv_decoded_text is not None and opencv_decoded_text != ""
 
-    return image_bytes
+    # Pyzbar
+    pyz_barcodes = pyzbar.decode(image)
+    pyzbar_detected = len(pyz_barcodes) > 0
+    
+    # If neither detect, return false
+    if not pyzbar_detected and not opencv_detected:
+        valid = False
+        decoded_text = None
+        return valid, decoded_text
 
-# local entrypoint for generating ./evals/data/scannability set
+    # If just pyzbar detects, return pyzbar result
+    if pyzbar_detected and not opencv_detected:
+        decoded_text = pyz_barcodes[0].data.decode("utf-8")
+        return True, decoded_text
+    
+    # If just opencv detects, return opencv result
+    if opencv_detected and not pyzbar_detected:
+        return True, opencv_decoded_text
+
+    # If both detect, ensure they're the same
+    if opencv_detected and pyzbar_detected:
+        if pyz_barcodes[0].data.decode("utf-8") == opencv_decoded_text:
+            return True, pyz_barcodes[0].data.decode("utf-8")
+        else:
+            print(f"Pyzbar and OpenCV decode to different texts, {pyz_barcodes[0].data.decode('utf-8')} and {opencv_decoded_text} returning false")
+            return False, None
+
+
+################################################################################
+# Experiments while developing the scannability eval
+# These are not used in the final eval, but are useful for showing the process
+################################################################################
+
+# local entrypoint for generating ./data/scannability set
+# from quart root:
+# modal run backend.evals.scannability::generate_detector_set
 @app.local_entrypoint()
 def generate_detector_set():
     from wonderwords import RandomWord # requires pip install wonderwords
@@ -88,7 +128,6 @@ def generate_detector_set():
         image_path = SCANNABILITY_SET / f"{prompt}.png"
         with open(image_path, "wb") as f:
             f.write(image_bytes)
-
 
 
 # function for openCV qr detection
@@ -214,7 +253,9 @@ class QReader:
         decoded_text = decoded_text[0]
         return True, decoded_text
 
-# local entrypoint for sweeping through ./evals/data/scannability
+# local entrypoint for testing ./data/scannability with different detectors
+# from quart root:
+# modal run backend.evals.scannability::compare_detectors
 @app.local_entrypoint()
 def compare_detectors():
     # ensure detector set exists and is sorted
@@ -290,6 +331,9 @@ def compare_detectors():
         print(f"True Negatives:  {true_negatives}")
         print(f"False Negatives: {false_negatives}")
 
+# local entrypoint for optimizing qreader threshold
+# from quart root:
+# modal run backend.evals.scannability::optimize_qreader_threshold
 @app.local_entrypoint()
 def optimize_qreader_threshold(size = "s"):
     # knowing that qreader has an adjustable threshold, 
@@ -367,7 +411,9 @@ def optimize_qreader_threshold(size = "s"):
     print(f"Optimal threshold: {optimal_threshold:.3f}")
     print(f"Best score: {-result.fun:.3f}")
 
-
+# local entrypoint for testing an ensemble of opencv and pyzbar
+# from quart root:
+# modal run backend.evals.scannability::test_ensemble
 @app.local_entrypoint()
 def test_ensemble():
     # if we keep the OR of opencv and pyzbar, does that eliminate false negatives and get closer to iphone?
@@ -432,61 +478,10 @@ def test_ensemble():
     score("Pyzbar", pyzbar_detected)
     score("Ensemble", ensemble_detected)
 
-# function for ensemble qr detection
-@app.function(image=image, allow_concurrent_inputs=100)
-def detect_qr_ensemble(image_bytes) -> Tuple[bool, str | None]:
-    import cv2
-    import os
-    from uuid import uuid4
-    from pyzbar import pyzbar
-
-    # lazy way to convert bytes to opencv image by writing to tmp file
-    # we allow concurrent inputs, so use uuid for the file to avoid collisions
-    uuid = str(uuid4())
-    tmp_path = f"tmp_{uuid}.png"
-    with open(tmp_path, "wb") as f:
-        f.write(image_bytes)
-    image = cv2.imread(tmp_path)
-    os.remove(tmp_path)
-
-    if image is None:
-        valid = False
-        decoded_text = None
-        return valid, decoded_text  
-
-    # OpenCV
-    qr_detector = cv2.QRCodeDetector()
-    opencv_decoded_text, opencv_points, _ = qr_detector.detectAndDecode(image)
-    opencv_detected = opencv_points is not None and opencv_decoded_text is not None and opencv_decoded_text != ""
-
-    # Pyzbar
-    pyz_barcodes = pyzbar.decode(image)
-    pyzbar_detected = len(pyz_barcodes) > 0
-    
-    # If neither detect, return false
-    if not pyzbar_detected and not opencv_detected:
-        valid = False
-        decoded_text = None
-        return valid, decoded_text
-
-    # If just pyzbar detects, return pyzbar result
-    if pyzbar_detected and not opencv_detected:
-        decoded_text = pyz_barcodes[0].data.decode("utf-8")
-        return True, decoded_text
-    
-    # If just opencv detects, return opencv result
-    if opencv_detected and not pyzbar_detected:
-        return True, opencv_decoded_text
-
-    # If both detect, ensure they're the same
-    if opencv_detected and pyzbar_detected:
-        if pyz_barcodes[0].data.decode("utf-8") == opencv_decoded_text:
-            return True, pyz_barcodes[0].data.decode("utf-8")
-        else:
-            print(f"Pyzbar and OpenCV decode to different texts, {pyz_barcodes[0].data.decode('utf-8')} and {opencv_decoded_text} returning false")
-            return False, None
-
-DETECTION_TABLE_PATH = Path(__file__).parent / "evals" / "data" / "scannability" / "detection_table.json"
+# local entrypoints for testing various ensemble strategies
+# from quart root:
+# modal run backend.evals.scannability::generate_detection_table
+DETECTION_TABLE_PATH = Path(__file__).parent / "data" / "scannability" / "detection_table.json"
 QREADER_THRESHOLDS = [0.86, 0.88, 0.9, 0.92, 0.94, 0.96] 
 @app.local_entrypoint()
 def generate_detection_table():
@@ -535,6 +530,8 @@ def generate_detection_table():
     with open(DETECTION_TABLE_PATH, "w") as f:
         json.dump(table, f)
 
+# from quart root:
+# modal run backend.evals.scannability::score_detection_table
 @app.local_entrypoint()
 def score_detection_table():
     import json

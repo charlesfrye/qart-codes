@@ -104,9 +104,9 @@ The ultimate eval would be to set up a physical screen with an iphone pointed at
 We don't want to deal with the hardware and uptime of that setup, so instead we'll need to build a closest possible emulation of iphone scanning using pure software.
 
 ### Building a dataset
-I ran a script that generates 100+ images on random prompts and QR code URLs `modal run eval_scannability::generate_detector_set`.
+I ran a script that generates 100+ images on random prompts and QR code URLs `modal run backend.evals.scannability::generate_detector_set`.
 
-It dumped them into `evals/data/scannability`
+It dumped them into `backend/evals/data/scannability`
 
 ### Sorting
 
@@ -188,7 +188,7 @@ If we went to prod with this model, it would just say 100% pass, and we wouldn't
 Thankfully, we can try something new. QReader being a Yolo model, it has an internal config for a `confidence threshold` which defaults to 50%. If we increase the threshold, we won't get so many positive detections.
 
 I wrote a program to do a sweep of the different thresholds
-`modal run eval_scannability.optimize_qreader_threshold`
+`modal run backend.evals.scannability.optimize_qreader_threshold`
 ```
 Testing threshold: 0.500
 True Positives:  110
@@ -268,7 +268,7 @@ Pyzbar:
 ```
 Frequently, OpenCV and Pyzbar have different results for the same image, meaning we'd improve detection rate by taking the OR of the two (at risk of false positives).
 
-`modal run eval_scannability::test_ensemble`
+`modal run backend.evals.scannability::test_ensemble`
 yields
 ```
 Detector:        Ensemble
@@ -288,7 +288,7 @@ This is where we only ensemble with another detector if the first detector retur
 The opencv + pyzbar ensemble worked great, but if we add qreader into the mix again, there are too many combinations of thresholds we could use for us to easily logic through it. So let's calculate it.
 
 I wrote a script that mapped out our different detectors (including the iphone) and their detections into binary. This includes qreader of various thresholds centered around the critical 0.92 confidence threshold that we'd previously seen be the tipping point in qreader.
-`modal run eval_scannability::generate_detection_table`
+`modal run backend.evals.scannability::generate_detection_table`
 ```
 {
     "iphone":       [1, 1, 1, 1, 1, 1, ...],
@@ -313,7 +313,7 @@ We then imagine different ensemble policies:
 - opencv + pyzbar ensemble with conditional fallback to qreader
 
 Across multiple qreader thresholds, we calculate stats of their ensembles:
-`modal run eval_scannability::score_detection_table`
+`modal run backend.evals.scannability::score_detection_table`
 ```
 Top 5 policies by accuracy:
 qreader@0.86: {'tp': 107, 'tn': 0, 'fp': 19, 'fn': 3, 'precision': 0.8492063492063492, 'recall': 0.9727272727272728, 'f0.5':
@@ -390,9 +390,9 @@ But while subjective, it's still important to maintain a consistent preference, 
 
 ### Building a dataset
 I write a script to reuse the 100+ images from the QR detection, because why waste good data.
- `modal run eval_aesthetics::copy_scannability_set`.
+ `modal run backend.evals.aesthetics::copy_scannability_set`.
 
-It dumped them into `evals/data/aesthetics`
+It dumped them into `backend/evals/data/aesthetics`
 
 ### Sorting
 
@@ -424,12 +424,12 @@ We need far more positive examples, so I tweaked the prompt to try to hit those 
 ```
 prompt = f"A {adjective1} {noun1}, 3D render in blender, trending on artstation, uses depth to trick the eye, colorful, high resolution, 8k, cinematic, concept art, illustration, painting, modern"
 ```
-`modal run eval_aesthetics::generate_aesthetics_set_manual`
+`modal run backend.evals.aesthetics::generate_aesthetics_set_manual`
 
 Using random adjectives and nouns resulted in 100% bad images, so I just scrapped them.
 
 I refocused on getting the highest quality results possible, manually writing a dozen prompts and iterating them to higher and higher quality.
-`modal run eval_aesthetics::generate_aesthetics_set_random`
+`modal run backend.evals.aesthetics::generate_aesthetics_set_random`
 
 After a few iterations, we're getting even better results that made me bump previous "good" results into "bad" buckets since the new stuff is so good.
 
@@ -449,7 +449,7 @@ https://huggingface.co/camenduru/improved-aesthetic-predictor
 
 This model uses the CLIP image embedding model fed into a custom neaural net, and trained on the AVA (Aesthetic Visual Analysis) dataset.
 
-The huggingface model wasn't usable out-of-the-box, so we had to rework it into our own library, found in `evals/improved_aesthetic_predictor/model.py`
+The huggingface model wasn't usable out-of-the-box, so we had to rework it into our own library, found in `aesthetics.py`
 
 
 As of time of writing this blog draft, this is the farthest I've gotten.

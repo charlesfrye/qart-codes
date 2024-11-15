@@ -1,8 +1,7 @@
 """Text-conditioned generative model of QR code images."""
 from dataclasses import dataclass
 from pathlib import Path
-import os
-from common import app
+from .common import app
 
 import modal
 

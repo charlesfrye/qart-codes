@@ -1,3 +1,0 @@
-- choose a word for the high level "eval". Commit to it across blog and codebase.
-- choose a word for each "test" in the "eval". Commit to it across blog and codebase. such as `detector` or `classifier`
-- choose a consistent naming for the dataset buckets between the two evals
