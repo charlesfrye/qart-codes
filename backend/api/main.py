@@ -9,6 +9,7 @@ from .common import toml_file_path
 @app.function(
     keep_warm=10,
     container_idle_timeout=60,
+    allow_concurrent_inputs=1000,
 )
 @asgi_app()
 def api():

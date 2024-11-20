@@ -100,10 +100,12 @@ def path_from_job_id(job_id: str) -> Path:
 def get_status(job_id: str) -> JobStatus:
     try:
         state = jobs.get(job_id)
+        if state is None:
+            return JobStatus.UNKNOWN
         return state["status"]
     except KeyError:
         print(job_id)
-        return JobStatus.NOT_STARTED
+        return JobStatus.UNKNOWN
 
 
 def set_status(job_id: str, status: JobStatus, payload: Optional[bytes] = None):
