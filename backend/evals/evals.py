@@ -18,7 +18,7 @@ URLS = [
     "https://www.reddit.com",
     "https://www.instagram.com",
     "https://www.pinterest.com",
-    "https://www.linkedin.com",
+    "https://www.linkedin.com"
     "https://www.tiktok.com",
     "https://www.snapchat.com",
     "https://www.twitch.tv",
@@ -38,8 +38,8 @@ RANDOM_SEED = 42
 
 AESTHETICS_THRESHOLD = 6.0
 
-N_TESTS = 1
-N_SAMPLES = 3
+N_TESTS = 20
+N_SAMPLES = 10
 
 MINUTE = 60
 
@@ -72,44 +72,52 @@ def run_aesthetics_eval(generated_images):
     ]
 
     results = []
+    all_scores = []
+    
     for test_idx, test in enumerate(tests, 1):
         scores = predictor.score.map(test)
-        passed = [score >= AESTHETICS_THRESHOLD for score in scores]
-        num_correct = sum(passed)
+        scores = list(scores)
+        all_scores.extend(scores)
         
-        # Calculate various pass@k estimates
-        pass_at_1 = estimate_pass_at_k(N_SAMPLES, num_correct, 1)
-        pass_at_3 = estimate_pass_at_k(N_SAMPLES, num_correct, 3)
-        pass_at_10 = estimate_pass_at_k(N_SAMPLES, num_correct, 10)
-        
-        results.append({
-            'num_samples': N_SAMPLES,
-            'num_correct': num_correct,
-            'pass@1': pass_at_1,
-            'pass@3': pass_at_3,
-            'pass@10': pass_at_10
-        })
+        # Calculate statistics for this test batch
+        batch_stats = {
+            'mean': np.mean(scores),
+            'median': np.median(scores),
+            'std': np.std(scores),
+            'min': np.min(scores),
+            'max': np.max(scores),
+            'scores': scores
+        }
+        results.append(batch_stats)
         
         print(f"\nAesthetics Test {test_idx}:")
-        print(f"Passed: {passed}")
-        print(f"Samples passed: {num_correct}/{N_SAMPLES}")
-        print(f"Estimated pass@1: {pass_at_1:.2%}")
-        print(f"Estimated pass@3: {pass_at_3:.2%}")
-        print(f"Estimated pass@10: {pass_at_10:.2%}")
+        print(f"Mean score: {batch_stats['mean']:.2f}")
+        print(f"Median score: {batch_stats['median']:.2f}")
+        print(f"Std dev: {batch_stats['std']:.2f}")
+        print(f"Range: {batch_stats['min']:.2f} - {batch_stats['max']:.2f}")
     
-    # Calculate averages across all tests
-    avg_results = {
-        'pass@1': np.mean([r['pass@1'] for r in results]),
-        'pass@3': np.mean([r['pass@3'] for r in results]),
-        'pass@10': np.mean([r['pass@10'] for r in results])
+    # Calculate aggregate statistics across all tests
+    aggregate_stats = {
+        'mean': np.mean(all_scores),
+        'median': np.median(all_scores),
+        'std': np.std(all_scores),
+        'min': np.min(all_scores),
+        'max': np.max(all_scores),
+        'p25': np.percentile(all_scores, 25),
+        'p75': np.percentile(all_scores, 75),
+        'p90': np.percentile(all_scores, 90),
     }
     
     print("\nFinal Aesthetics Results:")
-    print(f"pass@1:  {avg_results['pass@1']:.2%}")
-    print(f"pass@3:  {avg_results['pass@3']:.2%}")
-    print(f"pass@10: {avg_results['pass@10']:.2%}")
+    print(f"Overall mean score: {aggregate_stats['mean']:.2f}")
+    print(f"Overall median score: {aggregate_stats['median']:.2f}")
+    print(f"Standard deviation: {aggregate_stats['std']:.2f}")
+    print(f"Score range: {aggregate_stats['min']:.2f} - {aggregate_stats['max']:.2f}")
+    print(f"25th percentile: {aggregate_stats['p25']:.2f}")
+    print(f"75th percentile: {aggregate_stats['p75']:.2f}")
+    print(f"90th percentile: {aggregate_stats['p90']:.2f}")
     
-    return avg_results
+    return aggregate_stats
 
 @app.function(image=runner_image, timeout=30 * MINUTE)
 def run_scannability_eval(generated_images):
@@ -200,9 +208,9 @@ def run_evals():
     scannability_future = run_scannability_eval.spawn(images_bytes)
 
     # wait for evals to finish
-    aesthetics_score = aesthetics_future.get()
+    aesthetics_stats = aesthetics_future.get()
     scannability_score = scannability_future.get()
-    return aesthetics_score, scannability_score
+    return aesthetics_stats, scannability_score
 
 # from qart root:
 # modal run backend.evals.evals
@@ -216,12 +224,12 @@ def run():
         settings=wandb.Settings(code_dir=".")
     )
 
-    aesthetics_score, scannability_score = run_evals.remote()
+    aesthetics_stats, scannability_score = run_evals.remote()
 
     wandb_run.summary.update({
         "n_tests": N_TESTS,
         "n_samples": N_SAMPLES,
-        "aesthetics": aesthetics_score,
+        "aesthetics": aesthetics_stats,
         "scannability": scannability_score,
     })
 
@@ -231,8 +239,8 @@ def run():
     print("N_TESTS:", N_TESTS)
     print("N_SAMPLES:", N_SAMPLES)
     print("\nAesthetics:")
-    for k, v in aesthetics_score.items():
-        print(f"{k}: {v:.2%}")
+    for k, v in aesthetics_stats.items():
+        print(f"{k}: {v:.2f}")
     print("\nScannability:")
     for k, v in scannability_score.items():
         print(f"{k}: {v:.2%}")
