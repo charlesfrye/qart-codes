@@ -321,6 +321,8 @@ def generate_aesthetics_set_manual():
         with open(image_path, "wb") as f:
             f.write(image_bytes)
 
+# from quart root:
+# modal run backend.evals.aesthetics::compare_aesthetics_predictions
 @app.local_entrypoint()
 def compare_aesthetics_predictions():
     good_dir = AESTHETICS_SET / "good"
