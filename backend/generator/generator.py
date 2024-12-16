@@ -27,8 +27,7 @@ class InferenceConfig:
     """Configuration information for inference."""
 
     num_inference_steps: int = 100
-    # controlnet_conditioning_scale: float = 1.5
-    controlnet_conditioning_scale: float = 1.3
+    controlnet_conditioning_scale: float = 1.5
     guidance_scale: float = 8.0
 
 
