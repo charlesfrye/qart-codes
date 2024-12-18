@@ -5,21 +5,27 @@ from pathlib import Path
 
 import modal
 
+volume = modal.Volume.from_name("qart-models", create_if_missing=True)
 app = modal.App(name="qart-inference")
+
+VOLUME_PATH = Path("/vol")
+MODELS_PATH = VOLUME_PATH / "models"
 
 inference_image = (
     modal.Image.debian_slim(python_version="3.10")
-    .pip_install(
-        "accelerate==0.21.0",
-        "datasets==2.13.1",
-        "diffusers==0.20.2",
-        "Pillow~=10.0.0",
-        "torch==2.0.1",
-        "transformers==4.30.2",
-        "triton==2.0.0",
-        "xformers==0.0.20",
-    )
     .apt_install("ffmpeg", "libsm6", "libxext6")
+    .pip_install(
+        "accelerate~=1.2.1",
+        "datasets~=2.13.1",
+        "diffusers==0.31.0",
+        "Pillow~=10.0.0",
+        "torch==2.5.1",
+        "transformers==4.47.1",
+        "triton==3.1.0",
+        "huggingface-hub==0.27.0",
+        "hf-transfer==0.1.8",
+    )
+    .env({"HF_HUB_ENABLE_HF_TRANSFER": "1", "HF_HOME": str(MODELS_PATH)})
 )
 
 
@@ -37,26 +43,21 @@ CONFIG = InferenceConfig()
 
 @app.cls(
     image=inference_image,
-    gpu="a100",
+    gpu="h100",
     secrets=[modal.Secret.from_name("huggingface")],
+    volumes={VOLUME_PATH: volume},
     keep_warm=1,
     container_idle_timeout=1200,
     allow_concurrent_inputs=10,
 )
 class Model:
     def setup(self, with_cuda=False):
-        import os
-
-        import huggingface_hub
         from diffusers import (
             ControlNetModel,
             DDIMScheduler,
             StableDiffusionControlNetPipeline,
         )
         import torch
-
-        hf_key = os.environ["HUGGINGFACE_TOKEN"]
-        huggingface_hub.login(hf_key)
 
         controlnet = ControlNetModel.from_pretrained(
             "monster-labs/control_v1p_sd15_qrcode_monster",
@@ -78,19 +79,13 @@ class Model:
         if with_cuda:
             controller = controller.to("cuda") if with_cuda else controller
 
-            controller.enable_xformers_memory_efficient_attention()
-
         return controller
-
-    @modal.build()
-    def download_models(self):
-        self.setup(with_cuda=False)
 
     @modal.enter()
     def start(self):
         from accelerate.utils import write_basic_config
 
-        write_basic_config()
+        write_basic_config(mixed_precision="fp16")
 
         controller = self.setup(with_cuda=True)
 
