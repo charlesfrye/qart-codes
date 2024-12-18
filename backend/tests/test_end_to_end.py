@@ -5,16 +5,18 @@ import requests
 
 
 BACKEND_URL = "https://charlesfrye--qart-api-dev.modal.run"
-with open(Path("assets") / "qr-dataurl.txt") as f:
-    test_qr_dataurl = f.read()
+here = Path(__file__).parent
 
-OUTPUT_PATH = Path(__file__).parent / "out"
-OUTPUT_PATH.mkdir(exist_ok=True)
+test_qr_dataurl = (here.parent / "assets" / "qr-dataurl.txt").read_text()
+
+output_dir = here / "out"
+output_dir.mkdir(exist_ok=True)
 
 
 def test_end_to_end():
-    health = requests.get(BACKEND_URL + "/health")
-    health.raise_for_status()
+    health_response = requests.get(BACKEND_URL + "/health")
+    health_response.raise_for_status()
+
     job_route = BACKEND_URL + "/job"
     start = time.monotonic_ns()
     result = requests.post(
@@ -31,24 +33,24 @@ def test_end_to_end():
     print(f"job_id: {job_id}")
 
     status = result.json()["status"]
-    while status in ["PENDING", "RUNNING"]:
-        time.sleep(1)
+    while status in ["PENDING", "RUNNING", "UNKNOWN"]:
+        time.sleep(0.1)
         result = requests.get(job_route, params={"job_id": job_id})
         result.raise_for_status()
         status = result.json()["status"]
 
-    job_status_received = time.monotonic_ns()
-    print("job status received in", (job_status_received - job_posted) / 1e9, "seconds")
+    job_status_complete = time.monotonic_ns()
+    print("job marked complete in", (job_status_complete - job_posted) / 1e9, "seconds")
     assert status == "COMPLETE", result
 
     result = requests.get(job_route + f"/{job_id}")
     result_received = time.monotonic_ns()
     print(
-        "result received in", (result_received - job_status_received) / 1e9, "seconds"
+        "result received in", (result_received - job_status_complete) / 1e9, "seconds"
     )
     result.raise_for_status()
 
-    with open(OUTPUT_PATH / f"{job_id}-qr.png", "wb") as f:
-        f.write(result.content)
+    output_path = output_dir / f"{job_id}-qr.png"
+    output_path.write_bytes(result.content)
 
-    print("written to file at", f.name)
+    print("written to file at", output_path)

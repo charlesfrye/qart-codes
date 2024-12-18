@@ -53,21 +53,7 @@ def create(info) -> FastAPI:
         tags=["jobs"],
     )
     async def start_job(request: JobRequest) -> JobStatusResponse:
-        from wonderwords import RandomWord
-
-        r_gen = RandomWord()
-        verb = r_gen.word(
-            include_parts_of_speech=["verb"], word_min_length=4, word_max_length=7
-        )
-        adjective = r_gen.word(
-            include_parts_of_speech=["adjective"], word_min_length=4, word_max_length=7
-        )
-        noun = r_gen.word(
-            include_parts_of_speech=["noun"], word_min_length=4, word_max_length=7
-        )
-
-        job_id = "-".join([verb, adjective, noun])
-
+        job_id = generate_job_id()
         jobs.start(job_id, request)
 
         return JobStatusResponse(job_id=job_id, status=JobStatus.PENDING)
@@ -113,3 +99,20 @@ def create(info) -> FastAPI:
             raise HTTPException(status_code=404, detail="Job result not found")
 
     return api_backend
+
+
+def generate_job_id():
+    from wonderwords import RandomWord
+
+    r_gen = RandomWord()
+    verb = r_gen.word(
+        include_parts_of_speech=["verb"], word_min_length=4, word_max_length=7
+    )
+    adjective = r_gen.word(
+        include_parts_of_speech=["adjective"], word_min_length=4, word_max_length=7
+    )
+    noun = r_gen.word(
+        include_parts_of_speech=["noun"], word_min_length=4, word_max_length=7
+    )
+
+    return "-".join([verb, adjective, noun])

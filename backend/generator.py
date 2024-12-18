@@ -96,20 +96,6 @@ class Model:
 
         self.pipe = controller
 
-    @staticmethod
-    def resize_for_condition_image(input_image, resolution: int = 512):
-        import PIL.Image
-
-        input_image = input_image.convert("RGB")
-        W, H = input_image.size
-        k = float(resolution) / min(H, W)
-        H *= k
-        W *= k
-        H = int(round(H / 64.0)) * 64
-        W = int(round(W / 64.0)) * 64
-        img = input_image.resize((W, H), resample=PIL.Image.LANCZOS)
-        return img
-
     @modal.method()
     def generate(self, text, input_image):
         import base64
@@ -119,12 +105,14 @@ class Model:
 
         print(input_image[:10])
         print(input_image[-10:])
+
         if "base64," in input_image:
             input_image = input_image.split("base64,")[1]
-        input_image = PIL.Image.open(io.BytesIO(base64.b64decode(input_image))).convert(
-            "RGB"
-        )
+
+        input_image = base64.b64decode(input_image)
+        input_image = PIL.Image.open(io.BytesIO(input_image)).convert("RGB")
         input_image = input_image.resize((768, 768), resample=PIL.Image.LANCZOS)
+
         output_image = self.pipe(
             text,
             negative_prompt="ugly, disfigured, low quality, blurry",
@@ -150,17 +138,17 @@ class Model:
 @app.local_entrypoint()
 def main(text: str = None):
     qr_dataurl = (Path(__file__).parent / "assets" / "qr-dataurl.txt").read_text()
+
     if text is None:
-        text = "neon green prism, glowing, reflective, iridescent, metallic, rendered with blender, trending on artstation"
+        text = "neon green prism, glowing, reflective, iridescent, metallic,"
+        " rendered with blender, trending on artstation"
 
     image_bytes = Model.generate.remote(text=text, input_image=qr_dataurl)
 
-    with open(
-        Path(__file__).parent / "tests" / "out" / f"{slugify(text)}.png", "wb"
-    ) as f:
-        f.write(image_bytes)
+    out_path = Path(__file__).parent / "tests" / "out" / f"{slugify(text)}.png"
+    out_path.write_bytes(image_bytes)
 
-    print("saved output to", f.name)
+    print("saved output to", out_path)
 
 
 def slugify(string):

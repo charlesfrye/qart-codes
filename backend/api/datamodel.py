@@ -12,15 +12,7 @@ class HealthResponse(BaseModel):
     status: str
     status_unserious: Optional[str] = None
 
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                {
-                    "status": "200 OK",
-                }
-            ]
-        }
-    }
+    model_config = {"json_schema_extra": {"examples": [{"status": "200 OK"}]}}
 
 
 class HealthRequest(BaseModel):
