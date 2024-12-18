@@ -54,7 +54,7 @@ def create(info) -> FastAPI:
     )
     async def start_job(request: JobRequest) -> JobStatusResponse:
         job_id = generate_job_id()
-        jobs.start(job_id, request)
+        await jobs.start(job_id, request)
 
         return JobStatusResponse(job_id=job_id, status=JobStatus.PENDING)
 
@@ -67,7 +67,7 @@ def create(info) -> FastAPI:
         tags=["jobs"],
     )
     async def check_job(job_id: str):
-        status = jobs.check(job_id)
+        status = await jobs.check(job_id)
         return JobStatusResponse(job_id=job_id, status=status)
 
     @api_backend.delete(
@@ -78,7 +78,7 @@ def create(info) -> FastAPI:
     )
     async def cancel_job(job_id: str):
         try:
-            jobs.cancel(job_id)
+            await jobs.cancel(job_id)
         except KeyError:
             raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
         return Response(status_code=204)
@@ -91,7 +91,7 @@ def create(info) -> FastAPI:
     )
     async def read_job(job_id) -> Response:
         try:
-            result_bytes = jobs.read(job_id)
+            result_bytes = await jobs.read(job_id)
 
             return Response(result_bytes, media_type="image/png")
         except Exception as e:

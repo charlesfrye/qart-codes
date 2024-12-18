@@ -22,7 +22,11 @@ assets_mount = modal.Mount.from_local_dir(
 results_volume = modal.Volume.from_name("qart-results-vol")
 
 image = modal.Image.debian_slim(python_version="3.10").pip_install(
-    "fastapi[standard]==0.115.5", "pydantic>=2,<3", "wonderwords", "Pillow"
+    "fastapi[standard]==0.115.5",
+    "pydantic>=2,<3",
+    "wonderwords",
+    "Pillow",
+    "aiofiles==24.1.0",
 )
 app = modal.App("qart", image=image, mounts=[toml_file_mount, assets_mount])
 
