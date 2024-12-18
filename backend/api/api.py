@@ -39,7 +39,7 @@ def create(info) -> FastAPI:
         """vibecheck"""
         response = {"status": "200 OK"}
         if not serious:
-            response["status-unserious"] = "200 more like 💯 mirite"
+            response["status_unserious"] = "200 more like 💯 mirite"
         return HealthResponse(**response)
 
     @api_backend.post(
