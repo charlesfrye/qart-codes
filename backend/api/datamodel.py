@@ -1,4 +1,5 @@
 """Type definitions for data interfaces."""
+
 from enum import Enum
 from typing import Optional
 

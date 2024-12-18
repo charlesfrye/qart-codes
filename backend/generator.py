@@ -1,4 +1,5 @@
 """Text-conditioned generative model of QR code images."""
+
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -151,10 +152,9 @@ def main(text: str = None):
     qr_dataurl = (Path(__file__).parent / "assets" / "qr-dataurl.txt").read_text()
     if text is None:
         text = "neon green prism, glowing, reflective, iridescent, metallic, rendered with blender, trending on artstation"
-    image_bytes = Model.generate.remote(
-        text=text,
-        input_image=qr_dataurl,
-    )
+
+    image_bytes = Model.generate.remote(text=text, input_image=qr_dataurl)
+
     with open(
         Path(__file__).parent / "tests" / "out" / f"{slugify(text)}.png", "wb"
     ) as f:

@@ -3,7 +3,6 @@ from typing import Optional
 
 import modal
 
-
 from .common import app
 from .common import ASSETS_DIR, RESULTS_DIR, results_volume
 from .datamodel import JobStatus, JobRequest

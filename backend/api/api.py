@@ -1,4 +1,5 @@
 """FastAPI interface for a pollable job queue around the generative model."""
+
 from fastapi import FastAPI
 from fastapi.exceptions import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
