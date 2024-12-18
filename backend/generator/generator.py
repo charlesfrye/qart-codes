@@ -1,10 +1,9 @@
 """Text-conditioned generative model of QR code images."""
 from dataclasses import dataclass
 from pathlib import Path
+from .common import app
 
 import modal
-
-app = modal.App(name="qart-inference")
 
 inference_image = (
     modal.Image.debian_slim(python_version="3.10")
@@ -12,6 +11,7 @@ inference_image = (
         "accelerate==0.21.0",
         "datasets==2.13.1",
         "diffusers==0.20.2",
+        "huggingface_hub==0.25.2",
         "Pillow~=10.0.0",
         "torch==2.0.1",
         "transformers==4.30.2",
@@ -38,9 +38,9 @@ CONFIG = InferenceConfig()
     image=inference_image,
     gpu="a100",
     secrets=[modal.Secret.from_name("huggingface")],
-    keep_warm=1,
+    # keep_warm=1,
     container_idle_timeout=1200,
-    allow_concurrent_inputs=10,
+    concurrency_limit=8, # limit to 8 replicas to avoid GPU quota exhaustion when using other GPU services like evals
 )
 class Model:
     def setup(self, with_cuda=False):
@@ -155,8 +155,10 @@ def main(text: str = None):
         text=text,
         input_image=qr_dataurl,
     )
+    output_dir = Path(__file__).parent / "tests" / "out"
+    output_dir.mkdir(exist_ok=True)
     with open(
-        Path(__file__).parent / "tests" / "out" / f"{slugify(text)}.png", "wb"
+        output_dir / f"{slugify(text)}.png", "wb"
     ) as f:
         f.write(image_bytes)
 

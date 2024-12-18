@@ -4,7 +4,8 @@ import time
 import requests
 
 
-BACKEND_URL = "https://charlesfrye--qart-api-dev.modal.run"
+# BACKEND_URL = "https://charlesfrye--qart-api-dev.modal.run"
+BACKEND_URL = "https://erik-dunteman--qart-api-dev.modal.run"
 with open(Path("assets") / "qr-dataurl.txt") as f:
     test_qr_dataurl = f.read()
 
@@ -20,7 +21,7 @@ def test_end_to_end():
     result = requests.post(
         job_route,
         json={
-            "prompt": "a Shiba Inu drinking an Americano and eating pancakes",
+            "prompt": "Constellation that could be interpreted as a bad omen",
             "image": {"image_data": test_qr_dataurl},
         },
     )

@@ -16,7 +16,7 @@ assets_mount = modal.Mount.from_local_dir(
     local_path=Path("assets"), remote_path=ASSETS_DIR
 )
 
-results_volume = modal.NetworkFileSystem.from_name("qart-results-vol")
+results_volume = modal.Volume.from_name("qart-results-vol", create_if_missing=True)
 
 image = modal.Image.debian_slim().pip_install(
     "fastapi[standard]==0.115.5", "pydantic>=2,<3", "wonderwords", "Pillow"
