@@ -19,7 +19,7 @@ assets_mount = modal.Mount.from_local_dir(
     local_path=here.parent / "assets", remote_path=ASSETS_DIR
 )
 
-results_volume = modal.Volume.from_name("qart-results-vol")
+results_volume = modal.Volume.from_name("qart-results-vol", create_if_missing=True)
 
 image = modal.Image.debian_slim(python_version="3.10").pip_install(
     "fastapi[standard]==0.115.5",
@@ -27,6 +27,7 @@ image = modal.Image.debian_slim(python_version="3.10").pip_install(
     "wonderwords",
     "Pillow",
     "aiofiles==24.1.0",
+    "toml==0.10.2",
 )
 app = modal.App("qart", image=image, mounts=[toml_file_mount, assets_mount])
 
