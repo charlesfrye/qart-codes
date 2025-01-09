@@ -1,3 +1,4 @@
 modal==0.68.29
 fastapi[standard]==0.115.5
 pydantic>=2,<3
+toml==0.10.2

@@ -27,6 +27,7 @@ image = modal.Image.debian_slim(python_version="3.10").pip_install(
     "wonderwords",
     "Pillow",
     "aiofiles==24.1.0",
+    "toml==0.10.2",
 )
 app = modal.App("qart", image=image, mounts=[toml_file_mount, assets_mount])
 
