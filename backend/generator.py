@@ -36,6 +36,10 @@ class InferenceConfig:
     num_inference_steps: int = 100
     controlnet_conditioning_scale: float = 1.5
     guidance_scale: float = 8.0
+    negative_prompt: str = "ugly, disfigured, low quality, blurry"
+    height: int = 768
+    width: int = 768
+    num_images_per_prompt: int = 8
 
 
 CONFIG = InferenceConfig()
@@ -92,7 +96,19 @@ class Model:
         self.pipe = controller
 
     @modal.method()
-    def generate(self, text, input_image):
+    def generate(
+        self,
+        text,
+        input_image,
+        negative_prompt=CONFIG.negative_prompt,
+        height=CONFIG.height,
+        width=CONFIG.width,
+        num_inference_steps=CONFIG.num_inference_steps,
+        num_images_per_prompt=CONFIG.num_images_per_prompt,
+        controlnet_conditioning_scale=CONFIG.controlnet_conditioning_scale,
+        guidance_scale=CONFIG.guidance_scale,
+        **kwargs,
+    ):
         import base64
         import io
 
@@ -106,28 +122,33 @@ class Model:
 
         input_image = base64.b64decode(input_image)
         input_image = PIL.Image.open(io.BytesIO(input_image)).convert("RGB")
-        input_image = input_image.resize((768, 768), resample=PIL.Image.LANCZOS)
+        input_image = input_image.resize((width, height), resample=PIL.Image.LANCZOS)
 
-        output_image = self.pipe(
+        output_images = self.pipe(
             text,
-            negative_prompt="ugly, disfigured, low quality, blurry",
+            negative_prompt=negative_prompt,
             image=input_image,
-            height=768,
-            width=768,
-            num_inference_steps=CONFIG.num_inference_steps,
-            controlnet_conditioning_scale=CONFIG.controlnet_conditioning_scale,
-            guidance_scale=CONFIG.guidance_scale,
-        )["images"][0]
+            height=height,
+            width=width,
+            num_inference_steps=num_inference_steps,
+            num_images_per_prompt=num_images_per_prompt,
+            controlnet_conditioning_scale=controlnet_conditioning_scale,
+            guidance_scale=guidance_scale,
+            **kwargs,
+        )["images"]
 
-        # blend the input QR code with the output image to improve scanability
-        output_image = PIL.Image.blend(input_image, output_image, 0.85)
+        bytes_images = []
+        for output_image in output_images:
+            # blend the input QR code with the output image to improve scanability
+            output_image = PIL.Image.blend(input_image, output_image, 0.95)
 
-        buffer = io.BytesIO()
-        output_image.save(buffer, format="PNG")
-        buffer.seek(0)
-        png_bytes = buffer.getvalue()
+            buffer = io.BytesIO()
+            output_image.save(buffer, format="PNG")
+            buffer.seek(0)
+            png_bytes = buffer.getvalue()
+            bytes_images.append(png_bytes)
 
-        return png_bytes
+        return bytes_images
 
 
 @app.local_entrypoint()
@@ -138,7 +159,7 @@ def main(text: str = None):
         text = "neon green prism, glowing, reflective, iridescent, metallic,"
         " rendered with blender, trending on artstation"
 
-    image_bytes = Model.generate.remote(text=text, input_image=qr_dataurl)
+    image_bytes = Model().generate.remote(text=text, input_image=qr_dataurl)
 
     out_path = Path(__file__).parent / "tests" / "out" / f"{slugify(text)}.png"
     out_path.write_bytes(image_bytes)

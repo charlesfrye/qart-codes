@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 from fastapi.exceptions import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
+from fastapi.responses import JSONResponse, Response
 
 from .datamodel import JobStatus, JobRequest, JobStatusResponse, HealthResponse
 from . import jobs
@@ -89,11 +89,10 @@ def create(info) -> FastAPI:
         summary="Get back the result of a QR code generation job",
         tags=["jobs"],
     )
-    async def read_job(job_id) -> Response:
+    async def read_job(job_id) -> JSONResponse:
         try:
-            result_bytes = await jobs.read(job_id)
-
-            return Response(result_bytes, media_type="image/png")
+            payload = await jobs.read(job_id)
+            return JSONResponse(content=payload)
         except Exception as e:
             print(e)
             raise HTTPException(status_code=404, detail="Job result not found")
