@@ -1,5 +1,5 @@
 import modal
-from ..generator import app, Model
+# from ..generator import app, Model
 
 image = (modal.Image.debian_slim()
     .pip_install("qrcode", "Pillow")
