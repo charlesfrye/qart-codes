@@ -27,8 +27,10 @@ type JobStatus =
   | `PENDING`
   | `RUNNING`
   | `COMPLETE`
+  | `CONSUMED`
   | `CANCELLED`
-  | `FAILED`;
+  | `FAILED`
+  | `UNKNOWN`;
 
 export async function startGeneration(
   prompt: string,
@@ -70,7 +72,16 @@ export async function pollGeneration(jobID: string): Promise<PollResult> {
   if (status === `COMPLETE`) {
     // Get job result
     const resultResponse = await fetch(`${BACKEND_URL}/job/${jobID}`);
-    return { status, result: URL.createObjectURL(await resultResponse.blob()) };
+    const jsonResponse = await resultResponse.json();
+
+    if (jsonResponse?.length > 0) {
+      // for now, ignore metadata and return first image
+      const base64Image = jsonResponse[0].image;
+      return {
+        status,
+        result: `data:image/png;base64,${base64Image}`,
+      };
+    } else throw new Error("Invalid API response: payload is missing or empty");
   }
 
   return { status };

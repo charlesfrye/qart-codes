@@ -23,6 +23,7 @@ help: banner ## get a list of all the targets, plus short descriptions
 
 api: modal-auth ## deploy the generator and API on Modal
 	modal deploy generator
+	modal deploy evals
 		$(if $(filter prod, $(value ENV)),\
 			modal deploy api, \
       modal serve api \

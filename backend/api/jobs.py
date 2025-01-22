@@ -1,3 +1,4 @@
+import base64
 from pathlib import Path
 from typing import Optional
 
@@ -12,6 +13,9 @@ jobs = modal.Dict.from_name(
 )
 
 Model = modal.Cls.lookup("qart-inference", "Model")
+AestheticPredictor = modal.Cls.lookup("qart-eval", "ImprovedAestheticPredictor")
+aesthetic_predictor = AestheticPredictor()
+qr_detector = modal.Function.lookup("qart-eval", "detect_qr_ensemble")
 
 
 async def start(job_id: str, request: JobRequest):
@@ -23,6 +27,8 @@ async def start(job_id: str, request: JobRequest):
             call = generate_and_save.spawn(
                 job_id, request.prompt, request.image.image_data
             )
+            # No-op to cold start the aesthetic predictor
+            _ = aesthetic_predictor.wake.spawn()
             await jobs.put.aio(job_id, {"status": JobStatus.PENDING, "handle": call})
 
     except Exception as e:
@@ -65,16 +71,56 @@ async def generate_and_save(job_id: str, prompt: str, image: str):
 
     # await the result
     try:
-        image_bytes = call.get(timeout=90)
+        images_bytes = call.get(timeout=90)
     except TimeoutError as e:
         await set_status(job_id, JobStatus.FAILED)
         jobs[job_id]["error"] = e
         return
 
-    await set_status(job_id, JobStatus.COMPLETE, payload=image_bytes)
+    n_images = len(images_bytes)
+    # attempt to call evaluators
+    detected_handles, rating_handles = [], []
+    for image_bytes in images_bytes:
+        detected_handles.append(qr_detector.spawn(image_bytes))
+        rating_handles.append(aesthetic_predictor.score.spawn(image_bytes))
+
+    detecteds = [None] * n_images
+    for ii, handle in enumerate(detected_handles):
+        try:
+            detecteds[ii] = handle.get(timeout=30)
+        except TimeoutError:
+            continue
+
+    ratings = [None] * n_images
+    for ii, handle in enumerate(rating_handles):
+        try:
+            ratings[ii] = handle.get(timeout=30)
+        except TimeoutError:
+            continue
+
+    payload = [None] * n_images
+    for ii, image_bytes, detected, rating in zip(
+        range(n_images), images_bytes, detecteds, ratings
+    ):
+        result = {
+            "image": base64.b64encode(image_bytes).decode("utf-8"),
+            "evaluation": {
+                "detected": detected[0],
+                "aesthetic_rating": rating,
+            },
+        }
+        payload[ii] = result
+
+    await set_status(job_id, JobStatus.COMPLETE, payload=payload)
 
     # write the result to a file
     await save_qr_code(image_bytes, path)
+
+
+async def save_qr_codes(images, basepath):
+    for ii, image in enumerate(images):
+        path = basepath.parent / f"qr_{str(ii).zfill(2)}.png"
+        await save_qr_code(image, path)
 
 
 async def save_qr_code(image_bytes, path):
