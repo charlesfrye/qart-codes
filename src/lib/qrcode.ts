@@ -84,9 +84,10 @@ export async function pollGeneration(jobID: string): Promise<PollResult> {
 
     if (jsonResponse?.length > 0) {
       // Filter for detected codes
-      const detectedGenerations = jsonResponse.filter(
-        (gen) => gen.evaluation?.detected
-      );
+      const detectedGenerations =
+        jsonResponse.some((gen) => gen.evaluation?.detected)
+          ? jsonResponse.filter((gen) => gen.evaluation?.detected)
+          : jsonResponse;
 
       // Find the entry with the highest 'aesthetic_rating'
       const bestGen = detectedGenerations.reduce(
