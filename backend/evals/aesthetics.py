@@ -139,10 +139,6 @@ class ImprovedAestheticPredictor:
     def __init__(self):
         pass
 
-    @modal.build()
-    def download(self):
-        download_models()
-
     @modal.enter()
     def load(self):
         model, clip, preprocess = load_models()
