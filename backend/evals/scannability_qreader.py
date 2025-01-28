@@ -18,7 +18,7 @@ image = (
 
 
 @app.cls(image=image, gpu="any", allow_concurrent_inputs=10)
-class TunedQReader:
+class ScannabilityQReader:
     def __init__(self):
         pass
 

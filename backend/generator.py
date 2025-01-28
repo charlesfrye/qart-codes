@@ -35,9 +35,9 @@ class InferenceConfig:
 
     num_inference_steps: int = 100
     controlnet_conditioning_scale: float = 1.5
-    control_guidance_start: float = 0.0
+    control_guidance_start: float = 0.25
     control_guidance_end: float = 1.0
-    guidance_scale: float = 8.0
+    guidance_scale: float = 3.5
     negative_prompt: str = "worst quality, low quality, ugly, disfigured, low quality, blurry"
     height: int = 768
     width: int = 768
