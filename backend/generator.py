@@ -41,7 +41,7 @@ class InferenceConfig:
     negative_prompt: str = "worst quality, low quality, ugly, disfigured, low quality, blurry"
     height: int = 768
     width: int = 768
-    num_images_per_prompt: int = 1
+    num_images_per_prompt: int = 8
 
 
 CONFIG = InferenceConfig()
