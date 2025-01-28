@@ -38,7 +38,7 @@ class InferenceConfig:
     control_guidance_start: float = 0.0
     control_guidance_end: float = 1.0
     guidance_scale: float = 8.0
-    negative_prompt: str = "ugly, disfigured, low quality, blurry"
+    negative_prompt: str = "worst quality, low quality, ugly, disfigured, low quality, blurry"
     height: int = 768
     width: int = 768
     num_images_per_prompt: int = 1
