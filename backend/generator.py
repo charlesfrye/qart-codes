@@ -35,6 +35,8 @@ class InferenceConfig:
 
     num_inference_steps: int = 100
     controlnet_conditioning_scale: float = 1.5
+    control_guidance_start: float = 0.0
+    control_guidance_end: float = 1.0
     guidance_scale: float = 8.0
     negative_prompt: str = "ugly, disfigured, low quality, blurry"
     height: int = 768
@@ -105,8 +107,10 @@ class Model:
         width=CONFIG.width,
         num_inference_steps=CONFIG.num_inference_steps,
         num_images_per_prompt=CONFIG.num_images_per_prompt,
-        controlnet_conditioning_scale=CONFIG.controlnet_conditioning_scale,
         guidance_scale=CONFIG.guidance_scale,
+        controlnet_conditioning_scale=CONFIG.controlnet_conditioning_scale,
+        control_guidance_start=CONFIG.control_guidance_start,
+        control_guidance_end=CONFIG.control_guidance_end,
         **kwargs,
     ):
         import base64
@@ -132,8 +136,10 @@ class Model:
             width=width,
             num_inference_steps=num_inference_steps,
             num_images_per_prompt=num_images_per_prompt,
-            controlnet_conditioning_scale=controlnet_conditioning_scale,
             guidance_scale=guidance_scale,
+            controlnet_conditioning_scale=controlnet_conditioning_scale,
+            control_guidance_start=control_guidance_start,
+            control_guidance_end=control_guidance_end,
             **kwargs,
         )["images"]
 
