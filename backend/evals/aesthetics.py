@@ -2,31 +2,6 @@ import modal
 
 app = modal.App(name="qart-aesthetics")
 
-# we just share the same image across detectors
-image = (
-    modal.Image.debian_slim()
-    .apt_install("git", "wget")
-    .pip_install(
-        "qrcode",
-        "Pillow",
-        "transformers",
-        "torch",
-        "pytorch-lightning",
-        "git+https://github.com/openai/CLIP.git",
-    )
-)
-
-
-# Below is a rewrite of the improved aesthetic predictor model
-# Credit https://huggingface.co/camenduru/improved-aesthetic-predictor/blob/main/simple_inference.py
-def normalized(a, axis=-1, order=2):
-    import numpy as np
-
-    l2 = np.atleast_1d(np.linalg.norm(a, order, axis))
-    l2[l2 == 0] = 1
-    return a / np.expand_dims(l2, axis)
-
-
 MODEL_PATH = "sac+logos+ava1-l14-linearMSE.pth"
 MODEL_DIR = "/models"
 MODEL_DOWNLOAD_URL = "https://huggingface.co/camenduru/improved-aesthetic-predictor/resolve/main/sac%2Blogos%2Bava1-l14-linearMSE.pth"
@@ -47,6 +22,32 @@ def download_models():
 
     # Clip
     clip.load("ViT-L/14", device="cpu")  # caches model
+
+
+# we just share the same image across detectors
+image = (
+    modal.Image.debian_slim()
+    .apt_install("git", "wget")
+    .pip_install(
+        "qrcode",
+        "Pillow",
+        "transformers",
+        "torch",
+        "pytorch-lightning",
+        "git+https://github.com/openai/CLIP.git",
+    )
+    .run_function(download_models)
+)
+
+
+# Below is a rewrite of the improved aesthetic predictor model
+# Credit https://huggingface.co/camenduru/improved-aesthetic-predictor/blob/main/simple_inference.py
+def normalized(a, axis=-1, order=2):
+    import numpy as np
+
+    l2 = np.atleast_1d(np.linalg.norm(a, order, axis))
+    l2[l2 == 0] = 1
+    return a / np.expand_dims(l2, axis)
 
 
 def load_models():
