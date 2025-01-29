@@ -1,10 +1,17 @@
+import json
+import os
 from pathlib import Path
 import time
 
+from dotenv import load_dotenv
 import requests
 
+load_dotenv()
 
-BACKEND_URL = "https://charlesfrye--qart-api-dev.modal.run"
+
+BACKEND_URL = (
+    os.environ.get("DEV_BACKEND_URL") or "https://charlesfrye--qart-api-dev.modal.run"
+)
 here = Path(__file__).parent
 
 test_qr_dataurl = (here.parent / "assets" / "qr-dataurl.txt").read_text()
@@ -50,7 +57,13 @@ def test_end_to_end():
     )
     result.raise_for_status()
 
-    output_path = output_dir / f"{job_id}-qr.png"
-    output_path.write_bytes(result.content)
+    output_path = output_dir / f"{job_id}-response.jsonl"
+    output_path.write_text(
+        "\n".join(json.dumps(result) for result in result.json()) + "\n"
+    )
 
     print("written to file at", output_path)
+
+
+if __name__ == "__main__":
+    test_end_to_end()

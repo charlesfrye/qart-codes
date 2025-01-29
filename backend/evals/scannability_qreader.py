@@ -6,13 +6,19 @@ app = modal.App(name="qart-qreader")
 def download_model():
     from qrdet import QRDetector
 
-    QRDetector()  # Specify model size here to download non-default ('s' - small)
+    QRDetector()
 
 
 image = (
-    modal.Image.debian_slim()
+    modal.Image.debian_slim(python_version="3.12")
     .apt_install("python3-opencv", "libzbar0")
-    .pip_install("opencv-python", "pillow", "pyzbar", "qrdet", "qreader")
+    .pip_install(
+        "opencv-python==4.11.0.86",
+        "pillow==11.1.0",
+        "pyzbar==0.1.9",
+        "qrdet==2.5",
+        "qreader==3.14",
+    )
     .run_function(download_model)
 )
 

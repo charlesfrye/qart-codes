@@ -14,8 +14,9 @@ jobs = modal.Dict.from_name(
 
 Model = modal.Cls.lookup("qart-inference", "Model")
 AestheticPredictor = modal.Cls.lookup("qart-eval", "ImprovedAestheticPredictor")
-aesthetic_predictor = AestheticPredictor()
 QReader = modal.Cls.lookup("qart-eval", "ScannabilityQReader")
+
+aesthetic_predictor = AestheticPredictor()
 qreader = QReader()
 
 
@@ -120,6 +121,7 @@ async def generate_and_save(job_id: str, prompt: str, image: str):
 
 async def save_qr_codes(images_bytes, basepath):
     import asyncio
+
     tasks = [
         save_qr_code(image_bytes, basepath / f"qr_{str(ii).zfill(2)}.png")
         for ii, image_bytes in enumerate(images_bytes)
