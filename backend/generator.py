@@ -1,4 +1,4 @@
-"""Text-conditioned generative model of QR code images."""
+"""Text-conditioned generative model of aesthetically pleasing corrupt QR codes."""
 
 from dataclasses import dataclass
 from pathlib import Path
@@ -10,6 +10,8 @@ app = modal.App(name="qart-inference")
 
 VOLUME_PATH = Path("/vol")
 MODELS_PATH = VOLUME_PATH / "models"
+
+here = Path(__file__).parent
 
 inference_image = (
     modal.Image.debian_slim(python_version="3.10")
@@ -35,11 +37,15 @@ class InferenceConfig:
 
     num_inference_steps: int = 100
     controlnet_conditioning_scale: float = 1.5
-    guidance_scale: float = 8.0
-    negative_prompt: str = "ugly, disfigured, low quality, blurry"
+    control_guidance_start: float = 0.25
+    control_guidance_end: float = 1.0
+    guidance_scale: float = 3.5
+    negative_prompt: str = (
+        "worst quality, low quality, ugly, disfigured, low quality, blurry"
+    )
     height: int = 768
     width: int = 768
-    num_images_per_prompt: int = 1
+    num_images_per_prompt: int = 8
 
 
 CONFIG = InferenceConfig()
@@ -105,8 +111,10 @@ class Model:
         width=CONFIG.width,
         num_inference_steps=CONFIG.num_inference_steps,
         num_images_per_prompt=CONFIG.num_images_per_prompt,
-        controlnet_conditioning_scale=CONFIG.controlnet_conditioning_scale,
         guidance_scale=CONFIG.guidance_scale,
+        controlnet_conditioning_scale=CONFIG.controlnet_conditioning_scale,
+        control_guidance_start=CONFIG.control_guidance_start,
+        control_guidance_end=CONFIG.control_guidance_end,
         **kwargs,
     ):
         import base64
@@ -132,8 +140,10 @@ class Model:
             width=width,
             num_inference_steps=num_inference_steps,
             num_images_per_prompt=num_images_per_prompt,
-            controlnet_conditioning_scale=controlnet_conditioning_scale,
             guidance_scale=guidance_scale,
+            controlnet_conditioning_scale=controlnet_conditioning_scale,
+            control_guidance_start=control_guidance_start,
+            control_guidance_end=control_guidance_end,
             **kwargs,
         )["images"]
 
@@ -151,20 +161,22 @@ class Model:
         return bytes_images
 
 
-@app.local_entrypoint()
+@app.local_entrypoint()  # for testing
 def main(text: str = None):
-    qr_dataurl = (Path(__file__).parent / "assets" / "qr-dataurl.txt").read_text()
+    qr_dataurl = (here / "assets" / "qr-dataurl.txt").read_text()
 
     if text is None:
         text = "neon green prism, glowing, reflective, iridescent, metallic,"
         " rendered with blender, trending on artstation"
 
-    image_bytes = Model().generate.remote(text=text, input_image=qr_dataurl)
+    images_bytes = Model().generate.remote(text=text, input_image=qr_dataurl)
 
-    out_path = Path(__file__).parent / "tests" / "out" / f"{slugify(text)}.png"
-    out_path.write_bytes(image_bytes)
-
-    print("saved output to", out_path)
+    out_dir = here / "tests" / "out"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for ii, image_bytes in enumerate(images_bytes):
+        out_path = out_dir / f"{slugify(text)}-{str(ii).zfill(2)}.png"
+        out_path.write_bytes(image_bytes)
+        print("saved output to", out_path)
 
 
 def slugify(string):

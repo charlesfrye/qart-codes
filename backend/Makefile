@@ -21,16 +21,33 @@ help: banner ## get a list of all the targets, plus short descriptions
 	@# source for the incantation: https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' Makefile | awk 'BEGIN {FS = ":.*?##"}; {printf "\033[36m%-12s\033[0m %s\n", $$1, $$2}'
 
-api: modal-auth ## deploy the generator and API on Modal
+api: backend modal-auth ## deploy the generator and API on Modal
+	$(if $(filter prod, $(value ENV)),\
+		modal deploy api, \
+	modal serve api \
+	)
+
+backend: modal-auth  # deploy the generator and evals on Modal
 	modal deploy generator
 	modal deploy evals
-		$(if $(filter prod, $(value ENV)),\
-			modal deploy api, \
-      modal serve api \
-		)
 
-tests: modal-auth dev-environment ## run the tests (you'll need to run modal serve too)
-	pytest -rP
+
+alltests: tests e2etests  ## run component-wise and e2e tests
+
+e2etests: modal-auth dev-environment  ## run e2e tests
+	@{ \
+		trap 'kill $$SERVER_PID' EXIT; \
+		modal serve api & \
+		SERVER_PID=$$!; \
+		sleep 5; \
+		pytest -rP; \
+	}
+
+tests: modal-auth dev-environment ## run the component-wise tests
+	modal run generator
+	modal run evals/aesthetics.py
+	modal run evals/scannability.py
+	modal run api.jobs
 
 modal-auth: environment ## authenticates to Modal
 	@$(if $(value MODAL_TOKEN_ID),, \

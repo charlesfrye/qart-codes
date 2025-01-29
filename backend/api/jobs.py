@@ -8,27 +8,55 @@ from .common import app
 from .common import ASSETS_DIR, RESULTS_DIR, results_volume
 from .datamodel import JobStatus, JobRequest
 
+
 jobs = modal.Dict.from_name(
     "qart-codes-jobs", {"_test": {"status": JobStatus.COMPLETE}}, create_if_missing=True
 )
 
-Model = modal.Cls.lookup("qart-inference", "Model")
-AestheticPredictor = modal.Cls.lookup("qart-eval", "ImprovedAestheticPredictor")
-aesthetic_predictor = AestheticPredictor()
-qr_detector = modal.Function.lookup("qart-eval", "detect_qr_ensemble")
+Model = modal.Cls.from_name("qart-inference", "Model")
+Aesthetics = modal.Cls.from_name("qart-eval", "Aesthetics")
+Scannability = modal.Cls.from_name("qart-eval", "Scannability")
+
+model = Model()
+aesthetics = Aesthetics()
+scannability = Scannability()
+
+
+@app.local_entrypoint()  # for testing
+async def main():
+    from uuid import uuid4
+
+    job_id = "_test"
+    internal_id = uuid4()
+
+    request = JobRequest(prompt="", image={"image_data": ""})
+    print(f"Starting fake job with id {internal_id}...")
+
+    await start(job_id, request)
+
+    status = await check(job_id)
+    assert status == JobStatus.PENDING
+
+    await set_status(job_id, JobStatus.COMPLETE, payload={"_id": str(internal_id)})
+    status = await check(job_id)
+
+    if status == JobStatus.COMPLETE:
+        payload = await read(job_id)
+        assert payload["_id"] == str(internal_id)
+        print(f"Response payload: {payload}")
 
 
 async def start(job_id: str, request: JobRequest):
     try:
+        await jobs.put.aio(job_id, {"status": JobStatus.PENDING, "handle": None})
         if job_id == "_test":
             return
         else:
-            await jobs.put.aio(job_id, {"status": JobStatus.PENDING, "handle": None})
             call = generate_and_save.spawn(
                 job_id, request.prompt, request.image.image_data
             )
-            # No-op to cold start the aesthetic predictor
-            _ = aesthetic_predictor.wake.spawn()
+            # No-ops to cold start the evaluators
+            aesthetics.wake.spawn(), scannability.wake.spawn()
             await jobs.put.aio(job_id, {"status": JobStatus.PENDING, "handle": call})
 
     except Exception as e:
@@ -59,11 +87,10 @@ async def read(job_id: str) -> bytes:
 async def generate_and_save(job_id: str, prompt: str, image: str):
     """Generate a QR code from a prompt and push it into the jobs dict."""
     try:
-        call = Model().generate.spawn(prompt, image)
+        call = model.generate.spawn(prompt, image)
         await set_status(job_id, JobStatus.RUNNING)
         path = path_from_job_id(job_id)
-        dir_path = path.parent
-        dir_path.mkdir(parents=True, exist_ok=True)
+        path.mkdir(parents=True, exist_ok=True)
     except Exception as e:
         await set_status(job_id, JobStatus.FAILED)
         jobs[job_id]["error"] = e
@@ -77,66 +104,58 @@ async def generate_and_save(job_id: str, prompt: str, image: str):
         jobs[job_id]["error"] = e
         return
 
-    n_images = len(images_bytes)
-    # attempt to call evaluators
-    detected_handles, rating_handles = [], []
-    for image_bytes in images_bytes:
-        detected_handles.append(qr_detector.spawn(image_bytes))
-        rating_handles.append(aesthetic_predictor.score.spawn(image_bytes))
+    # now call evaluators -- spawn and then gather (await all)
+    detector_handles = [scannability.check.spawn(img) for img in images_bytes]
+    rating_handles = [aesthetics.score.spawn(img) for img in images_bytes]
 
-    detecteds = [None] * n_images
-    for ii, handle in enumerate(detected_handles):
-        try:
-            detecteds[ii] = handle.get(timeout=30)
-        except TimeoutError:
-            continue
+    detecteds = modal.functions.gather(*detector_handles)
+    ratings = modal.functions.gather(*rating_handles)
 
-    ratings = [None] * n_images
-    for ii, handle in enumerate(rating_handles):
-        try:
-            ratings[ii] = handle.get(timeout=30)
-        except TimeoutError:
-            continue
-
-    payload = [None] * n_images
-    for ii, image_bytes, detected, rating in zip(
-        range(n_images), images_bytes, detecteds, ratings
-    ):
-        result = {
-            "image": base64.b64encode(image_bytes).decode("utf-8"),
+    # Construct the payload
+    payload = [
+        {
+            "image": base64.b64encode(img).decode("utf-8"),
             "evaluation": {
-                "detected": detected[0],
-                "aesthetic_rating": rating,
+                "detected": detecteds[ii][0] if detecteds[ii] else None,
+                "aesthetic_rating": ratings[ii],
             },
         }
-        payload[ii] = result
+        for ii, img in enumerate(images_bytes)
+    ]
 
     await set_status(job_id, JobStatus.COMPLETE, payload=payload)
 
     # write the result to a file
-    await save_qr_code(image_bytes, path)
+    await save_qr_codes(images_bytes, path)
 
 
-async def save_qr_codes(images, basepath):
-    for ii, image in enumerate(images):
-        path = basepath.parent / f"qr_{str(ii).zfill(2)}.png"
-        await save_qr_code(image, path)
+async def save_qr_codes(images_bytes, basepath):
+    import asyncio
+
+    tasks = [
+        save_qr_code(image_bytes, basepath / f"qr_{str(ii).zfill(2)}.png")
+        for ii, image_bytes in enumerate(images_bytes)
+    ]
+    await asyncio.gather(*tasks)
 
 
 async def save_qr_code(image_bytes, path):
     from aiofiles import open
 
-    print(path)
-    async with open(path, "wb") as f:
-        await f.write(image_bytes)
+    print(f"Saving: {path}")
+    try:
+        async with open(path, "wb") as f:
+            await f.write(image_bytes)
+    except Exception as e:
+        print(f"Error saving {path}: {e}")
 
 
 def path_from_job_id(job_id: str) -> Path:
     if job_id == "_test":
-        return ASSETS_DIR / "qart.png"
+        return ASSETS_DIR
     else:
         parts = job_id.split("-")
-        result_path = Path(RESULTS_DIR, *parts) / "qr.png"
+        result_path = Path(RESULTS_DIR, *parts)
     return result_path
 
 

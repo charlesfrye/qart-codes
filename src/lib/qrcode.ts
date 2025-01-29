@@ -58,6 +58,14 @@ type PollResult = {
   result?: string;
 };
 
+interface JsonResponseEntry {
+  evaluation?: {
+    detected: boolean;
+    aesthetic_rating: number;
+  };
+  image: string;
+}
+
 export async function pollGeneration(jobID: string): Promise<PollResult> {
   const statusResponse = await fetch(`${BACKEND_URL}/job?job_id=${jobID}`);
   const statusData = await statusResponse.json();
@@ -72,11 +80,26 @@ export async function pollGeneration(jobID: string): Promise<PollResult> {
   if (status === `COMPLETE`) {
     // Get job result
     const resultResponse = await fetch(`${BACKEND_URL}/job/${jobID}`);
-    const jsonResponse = await resultResponse.json();
+    const jsonResponse: JsonResponseEntry[] = await resultResponse.json();
 
     if (jsonResponse?.length > 0) {
-      // for now, ignore metadata and return first image
-      const base64Image = jsonResponse[0].image;
+      // Filter for detected codes
+      const detectedGenerations =
+        jsonResponse.some((gen) => gen.evaluation?.detected)
+          ? jsonResponse.filter((gen) => gen.evaluation?.detected)
+          : jsonResponse;
+
+      // Find the entry with the highest 'aesthetic_rating'
+      const bestGen = detectedGenerations.reduce(
+        (prev, current) =>
+          (current.evaluation?.aesthetic_rating ?? 0) >
+          (prev.evaluation?.aesthetic_rating ?? 0)
+            ? current
+            : prev,
+        jsonResponse[0]
+      );
+
+      const base64Image = bestGen.image;
       return {
         status,
         result: `data:image/png;base64,${base64Image}`,
