@@ -1,75 +1,74 @@
+from pathlib import Path
+from typing import Optional
+
 import modal
-from typing import Tuple
 
-app = modal.App(name="qart-scannability")
+app = modal.App(name="test-qart-qreader")
 
-# we just share the same image across detectors
+here = Path(__file__).parent
+ASSETS_DIR = here.parent / "assets"
+
+
+@app.local_entrypoint()  # for testing
+def main(
+    image_path: str = str(ASSETS_DIR / "qart.png"),
+    target_value: str = "https://tfs.ai/qart",
+):
+    print(f"Decoding QR code at {image_path}")
+    detected, decoded_value = Scannability().check.remote(Path(image_path).read_bytes())
+    if target_value:
+        assert detected
+        print("Detected QR code")
+        assert (
+            decoded_value == target_value
+        ), f"Expected {target_value} but got {decoded_value}"
+        print(f"Decoded QR code to {decoded_value}")
+
+
+def download_model():
+    from qrdet import QRDetector
+
+    QRDetector()
+
+
 image = (
-    modal.Image.debian_slim()
+    modal.Image.debian_slim(python_version="3.12")
     .apt_install("python3-opencv", "libzbar0")
-    .pip_install("opencv-python", "qrcode", "pillow", "pyzbar", "qreader")
+    .pip_install(
+        "opencv-python==4.11.0.86",
+        "pillow==11.1.0",
+        "pyzbar==0.1.9",
+        "qrdet==2.5",
+        "qreader==3.14",
+    )
+    .run_function(download_model)
 )
 
 
-@app.function(image=image, allow_concurrent_inputs=100)
-def detect_qr_ensemble(image_bytes: bytes) -> Tuple[bool, str | None]:
-    """Detect QR codes using OpenCV and pyzbar.
-    Args:
-        image_bytes (bytes): QR Image in bytes.
-    Returns:
-        Tuple[bool, str | None]: (valid, decoded_text)
+@app.cls(image=image, allow_concurrent_inputs=10)
+class Scannability:
+    def __init__(self):
+        pass
 
-    """
-    import io
-    import cv2
-    import numpy as np
-    from PIL import Image
-    from pyzbar import pyzbar
+    @modal.enter()
+    def load(self):
+        from qreader import QReader
 
-    # OpenCV
-    image_array = np.frombuffer(image_bytes, dtype=np.uint8)
-    opencv_image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
-    qr_detector = cv2.QRCodeDetector()
-    try:
-        opencv_decoded_text, opencv_points, _ = qr_detector.detectAndDecode(
-            opencv_image
-        )
-    except:  # TODO: Figure out how this is failing
-        opencv_decoded_text = None
-        opencv_points = None
+        self.qreader = QReader()
 
-    opencv_detected = (
-        opencv_points is not None
-        and opencv_decoded_text is not None
-        and opencv_decoded_text != ""
-    )
+    @modal.method()
+    def wake(self):
+        pass
 
-    # Pyzbar
-    pil_image = Image.open(io.BytesIO(image_bytes))
-    pyz_barcodes = pyzbar.decode(pil_image)
-    pyzbar_detected = len(pyz_barcodes) > 0
+    @modal.method()
+    def check(self, image_bytes: bytes) -> tuple[bool, Optional[str]]:
+        import cv2
+        import numpy as np
 
-    # If neither detect, return false
-    if not pyzbar_detected and not opencv_detected:
-        valid = False
-        decoded_text = None
-        return valid, decoded_text
-
-    # If just pyzbar detects, return pyzbar result
-    if pyzbar_detected and not opencv_detected:
-        decoded_text = pyz_barcodes[0].data.decode("utf-8")
-        return True, decoded_text
-
-    # If just opencv detects, return opencv result
-    if opencv_detected and not pyzbar_detected:
-        return True, opencv_decoded_text
-
-    # If both detect, ensure they're the same
-    if opencv_detected and pyzbar_detected:
-        if pyz_barcodes[0].data.decode("utf-8") == opencv_decoded_text:
-            return True, pyz_barcodes[0].data.decode("utf-8")
-        else:
-            print(
-                f"Pyzbar and OpenCV decode to different texts, {pyz_barcodes[0].data.decode('utf-8')} and {opencv_decoded_text} returning false"
-            )
+        image_array = np.frombuffer(image_bytes, dtype=np.uint8)
+        opencv_image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
+        image = cv2.cvtColor(opencv_image, cv2.COLOR_BGR2RGB)
+        decoded = self.qreader.detect_and_decode(image=image)
+        if decoded is None or len(decoded) == 0 or decoded[0] is None:
             return False, None
+        return True, decoded[0]
