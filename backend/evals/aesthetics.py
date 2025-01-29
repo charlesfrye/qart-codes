@@ -11,7 +11,7 @@ from pathlib import Path
 
 import modal
 
-app = modal.App(name="qart-aesthetics")
+app = modal.App(name="test-qart-aesthetics")
 
 MODEL_FILE = "sac+logos+ava1-l14-linearMSE.pth"
 REPO_URL = "https://huggingface.co/camenduru/improved-aesthetic-predictor"

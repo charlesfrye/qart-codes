@@ -1,6 +1,6 @@
 import modal
 
-app = modal.App(name="qart-qreader")
+app = modal.App(name="test-qart-qreader")
 
 
 def download_model():
