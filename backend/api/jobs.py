@@ -105,33 +105,12 @@ async def generate_and_save(job_id: str, prompt: str, image: str):
         jobs[job_id]["error"] = e
         return
 
-    n_images = len(images_bytes)
-
-    # now call evaluators -- spawn and then poll
+    # now call evaluators -- spawn and then gather (await all)
     detector_handles = [scannability.check.spawn(img) for img in images_bytes]
     rating_handles = [aesthetics.score.spawn(img) for img in images_bytes]
 
-    detecteds, ratings = [None] * n_images, [None] * n_images
-    pending_detectors, pending_ratings = set(range(n_images)), set(range(n_images))
-    timeout = 30
-
-    start_time = time.monotonic()
-    while pending_detectors or pending_ratings:
-        elapsed = time.monotonic() - start_time
-        if elapsed >= timeout:
-            break
-
-        for ii in list(pending_detectors):
-            result = detector_handles[ii].get(timeout=0)
-            if result is not None:
-                detecteds[ii] = result
-                pending_detectors.remove(ii)
-
-        for ii in list(pending_ratings):
-            result = rating_handles[ii].get(timeout=0)
-            if result is not None:
-                ratings[ii] = result
-                pending_ratings.remove(ii)
+    detecteds = modal.functions.gather(*detector_handles)
+    ratings = modal.functions.gather(*rating_handles)
 
     # Construct the payload
     payload = [
@@ -144,37 +123,6 @@ async def generate_and_save(job_id: str, prompt: str, image: str):
         }
         for ii, img in enumerate(images_bytes)
     ]
-
-    for image_bytes in images_bytes:
-        detector_handles.append(scannability.check.spawn(image_bytes))
-        rating_handles.append(aesthetics.score.spawn(image_bytes))
-
-    detecteds = [None] * n_images
-    for ii, handle in enumerate(detector_handles):
-        try:
-            detecteds[ii] = handle.get(timeout=30)
-        except TimeoutError:
-            continue
-
-    ratings = [None] * n_images
-    for ii, handle in enumerate(rating_handles):
-        try:
-            ratings[ii] = handle.get(timeout=30)
-        except TimeoutError:
-            continue
-
-    payload = [None] * n_images
-    for ii, image_bytes, detected, rating in zip(
-        range(n_images), images_bytes, detecteds, ratings
-    ):
-        result = {
-            "image": base64.b64encode(image_bytes).decode("utf-8"),
-            "evaluation": {
-                "detected": detected[0],
-                "aesthetic_rating": rating,
-            },
-        }
-        payload[ii] = result
 
     await set_status(job_id, JobStatus.COMPLETE, payload=payload)
 
