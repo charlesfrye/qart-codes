@@ -27,7 +27,7 @@ ASSETS_DIR = here.parent / "assets"
 
 @app.local_entrypoint()  # for testing
 def main(image_path: str = str(ASSETS_DIR / "qart.png"), target_score=4.72265625):
-    result = ImprovedAestheticPredictor().score.remote(Path(image_path).read_bytes())
+    result = Aesthetics().score.remote(Path(image_path).read_bytes())
     print(f"Aesthetic score: {result}")
     assert isclose(result, target_score)
 
@@ -109,7 +109,7 @@ def predict(aesthetic_model, clip, preprocess, pil_image):
 
 # Now we wrap inference in a modal class for hosting
 @app.cls(image=image, gpu="any", allow_concurrent_inputs=10, keep_warm=1)
-class ImprovedAestheticPredictor:
+class Aesthetics:
     """Predict a human aesthetic ranking based on CLIP embeddings and a linear model."""
 
     def __init__(self):

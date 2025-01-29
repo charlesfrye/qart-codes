@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional
 
 import modal
 
@@ -14,9 +15,7 @@ def main(
     target_value: str = "https://tfs.ai/qart",
 ):
     print(f"Decoding QR code at {image_path}")
-    detected, decoded_value = ScannabilityQReader().detect_qr_qreader.remote(
-        Path(image_path).read_bytes()
-    )
+    detected, decoded_value = Scannability().check.remote(Path(image_path).read_bytes())
     if target_value:
         assert detected
         print("Detected QR code")
@@ -47,7 +46,7 @@ image = (
 
 
 @app.cls(image=image, allow_concurrent_inputs=10)
-class ScannabilityQReader:
+class Scannability:
     def __init__(self):
         pass
 
@@ -62,7 +61,7 @@ class ScannabilityQReader:
         pass
 
     @modal.method()
-    def detect_qr_qreader(self, image_bytes):
+    def check(self, image_bytes: bytes) -> tuple[bool, Optional[str]]:
         import cv2
         import numpy as np
 
