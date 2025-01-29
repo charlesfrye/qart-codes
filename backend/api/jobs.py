@@ -1,4 +1,5 @@
 import base64
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -8,30 +9,55 @@ from .common import app
 from .common import ASSETS_DIR, RESULTS_DIR, results_volume
 from .datamodel import JobStatus, JobRequest
 
+
 jobs = modal.Dict.from_name(
     "qart-codes-jobs", {"_test": {"status": JobStatus.COMPLETE}}, create_if_missing=True
 )
 
 Model = modal.Cls.from_name("qart-inference", "Model")
-AestheticPredictor = modal.Cls.from_name("qart-eval", "ImprovedAestheticPredictor")
-QReader = modal.Cls.from_name("qart-eval", "ScannabilityQReader")
+Aesthetics = modal.Cls.from_name("qart-eval", "Aesthetics")
+Scannability = modal.Cls.from_name("qart-eval", "Scannability")
 
-aesthetic_predictor = AestheticPredictor()
-qreader = QReader()
+model = Model()
+aesthetics = Aesthetics()
+scannability = Scannability()
+
+
+@app.local_entrypoint()  # for testing
+async def main():
+    from uuid import uuid4
+
+    job_id = "_test"
+    internal_id = uuid4()
+
+    request = JobRequest(prompt="", image={"image_data": ""})
+    print(f"Starting fake job with id {internal_id}...")
+
+    await start(job_id, request)
+
+    status = await check(job_id)
+    assert status == JobStatus.PENDING
+
+    await set_status(job_id, JobStatus.COMPLETE, payload={"_id": str(internal_id)})
+    status = await check(job_id)
+
+    if status == JobStatus.COMPLETE:
+        payload = await read(job_id)
+        assert payload["_id"] == str(internal_id)
+        print(f"Response payload: {payload}")
 
 
 async def start(job_id: str, request: JobRequest):
     try:
+        await jobs.put.aio(job_id, {"status": JobStatus.PENDING, "handle": None})
         if job_id == "_test":
             return
         else:
-            await jobs.put.aio(job_id, {"status": JobStatus.PENDING, "handle": None})
             call = generate_and_save.spawn(
                 job_id, request.prompt, request.image.image_data
             )
             # No-ops to cold start the evaluators
-            _ = aesthetic_predictor.wake.spawn()
-            _ = qreader.wake.spawn()
+            aesthetics.wake.spawn(), scannability.wake.spawn()
             await jobs.put.aio(job_id, {"status": JobStatus.PENDING, "handle": call})
 
     except Exception as e:
@@ -62,7 +88,7 @@ async def read(job_id: str) -> bytes:
 async def generate_and_save(job_id: str, prompt: str, image: str):
     """Generate a QR code from a prompt and push it into the jobs dict."""
     try:
-        call = Model().generate.spawn(prompt, image)
+        call = model.generate.spawn(prompt, image)
         await set_status(job_id, JobStatus.RUNNING)
         path = path_from_job_id(job_id)
         path.mkdir(parents=True, exist_ok=True)
@@ -80,11 +106,48 @@ async def generate_and_save(job_id: str, prompt: str, image: str):
         return
 
     n_images = len(images_bytes)
-    # attempt to call evaluators
-    detector_handles, rating_handles = [], []
+
+    # now call evaluators -- spawn and then poll
+    detector_handles = [scannability.check.spawn(img) for img in images_bytes]
+    rating_handles = [aesthetics.score.spawn(img) for img in images_bytes]
+
+    detecteds, ratings = [None] * n_images, [None] * n_images
+    pending_detectors, pending_ratings = set(range(n_images)), set(range(n_images))
+    timeout = 30
+
+    start_time = time.monotonic()
+    while pending_detectors or pending_ratings:
+        elapsed = time.monotonic() - start_time
+        if elapsed >= timeout:
+            break
+
+        for ii in list(pending_detectors):
+            result = detector_handles[ii].get(timeout=0)
+            if result is not None:
+                detecteds[ii] = result
+                pending_detectors.remove(ii)
+
+        for ii in list(pending_ratings):
+            result = rating_handles[ii].get(timeout=0)
+            if result is not None:
+                ratings[ii] = result
+                pending_ratings.remove(ii)
+
+    # Construct the payload
+    payload = [
+        {
+            "image": base64.b64encode(img).decode("utf-8"),
+            "evaluation": {
+                "detected": detecteds[ii][0] if detecteds[ii] else None,
+                "aesthetic_rating": ratings[ii],
+            },
+        }
+        for ii, img in enumerate(images_bytes)
+    ]
+
     for image_bytes in images_bytes:
-        detector_handles.append(qreader.detect_qr_qreader.spawn(image_bytes))
-        rating_handles.append(aesthetic_predictor.score.spawn(image_bytes))
+        detector_handles.append(scannability.check.spawn(image_bytes))
+        rating_handles.append(aesthetics.score.spawn(image_bytes))
 
     detecteds = [None] * n_images
     for ii, handle in enumerate(detector_handles):
