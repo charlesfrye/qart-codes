@@ -12,9 +12,9 @@ jobs = modal.Dict.from_name(
     "qart-codes-jobs", {"_test": {"status": JobStatus.COMPLETE}}, create_if_missing=True
 )
 
-Model = modal.Cls.lookup("qart-inference", "Model")
-AestheticPredictor = modal.Cls.lookup("qart-eval", "ImprovedAestheticPredictor")
-QReader = modal.Cls.lookup("qart-eval", "ScannabilityQReader")
+Model = modal.Cls.from_name("qart-inference", "Model")
+AestheticPredictor = modal.Cls.from_name("qart-eval", "ImprovedAestheticPredictor")
+QReader = modal.Cls.from_name("qart-eval", "ScannabilityQReader")
 
 aesthetic_predictor = AestheticPredictor()
 qreader = QReader()
