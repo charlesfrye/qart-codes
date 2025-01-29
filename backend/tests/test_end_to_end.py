@@ -58,6 +58,8 @@ def test_end_to_end():
     result.raise_for_status()
 
     output_path = output_dir / f"{job_id}-response.jsonl"
+    for ii, res in enumerate(result.json()):
+        print(f"{ii}: {res['evaluation']}")
     output_path.write_text(
         "\n".join(json.dumps(result) for result in result.json()) + "\n"
     )
