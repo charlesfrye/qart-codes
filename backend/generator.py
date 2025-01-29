@@ -1,4 +1,4 @@
-"""Text-conditioned generative model of QR code images."""
+"""Text-conditioned generative model of aesthetically pleasing corrupt QR codes."""
 
 from dataclasses import dataclass
 from pathlib import Path
