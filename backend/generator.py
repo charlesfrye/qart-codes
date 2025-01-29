@@ -11,6 +11,8 @@ app = modal.App(name="qart-inference")
 VOLUME_PATH = Path("/vol")
 MODELS_PATH = VOLUME_PATH / "models"
 
+here = Path(__file__).parent
+
 inference_image = (
     modal.Image.debian_slim(python_version="3.10")
     .apt_install("ffmpeg", "libsm6", "libxext6")
@@ -38,7 +40,9 @@ class InferenceConfig:
     control_guidance_start: float = 0.25
     control_guidance_end: float = 1.0
     guidance_scale: float = 3.5
-    negative_prompt: str = "worst quality, low quality, ugly, disfigured, low quality, blurry"
+    negative_prompt: str = (
+        "worst quality, low quality, ugly, disfigured, low quality, blurry"
+    )
     height: int = 768
     width: int = 768
     num_images_per_prompt: int = 8
@@ -157,20 +161,22 @@ class Model:
         return bytes_images
 
 
-@app.local_entrypoint()
+@app.local_entrypoint()  # for testing
 def main(text: str = None):
-    qr_dataurl = (Path(__file__).parent / "assets" / "qr-dataurl.txt").read_text()
+    qr_dataurl = (here / "assets" / "qr-dataurl.txt").read_text()
 
     if text is None:
         text = "neon green prism, glowing, reflective, iridescent, metallic,"
         " rendered with blender, trending on artstation"
 
-    image_bytes = Model().generate.remote(text=text, input_image=qr_dataurl)
+    images_bytes = Model().generate.remote(text=text, input_image=qr_dataurl)
 
-    out_path = Path(__file__).parent / "tests" / "out" / f"{slugify(text)}.png"
-    out_path.write_bytes(image_bytes)
-
-    print("saved output to", out_path)
+    out_dir = here / "tests" / "out"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for ii, image_bytes in enumerate(images_bytes):
+        out_path = out_dir / f"{slugify(text)}-{str(ii).zfill(2)}.png"
+        out_path.write_bytes(image_bytes)
+        print("saved output to", out_path)
 
 
 def slugify(string):
