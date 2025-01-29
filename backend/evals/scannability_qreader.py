@@ -1,6 +1,29 @@
+from pathlib import Path
+
 import modal
 
 app = modal.App(name="test-qart-qreader")
+
+here = Path(__file__).parent
+ASSETS_DIR = here.parent / "assets"
+
+
+@app.local_entrypoint()  # for testing
+def main(
+    image_path: str = str(ASSETS_DIR / "qart.png"),
+    target_value: str = "https://tfs.ai/qart",
+):
+    print(f"Decoding QR code at {image_path}")
+    detected, decoded_value = ScannabilityQReader().detect_qr_qreader.remote(
+        Path(image_path).read_bytes()
+    )
+    if target_value:
+        assert detected
+        print("Detected QR code")
+        assert (
+            decoded_value == target_value
+        ), f"Expected {target_value} but got {decoded_value}"
+        print(f"Decoded QR code to {decoded_value}")
 
 
 def download_model():
@@ -23,7 +46,7 @@ image = (
 )
 
 
-@app.cls(image=image, gpu="any", allow_concurrent_inputs=10)
+@app.cls(image=image, allow_concurrent_inputs=10)
 class ScannabilityQReader:
     def __init__(self):
         pass
