@@ -21,7 +21,7 @@ import { wait } from "@laxels/utils";
 
 function App() {
   const [prompt, setPrompt] = useState(
-    `neon green cubes, rendered in blender, trending on artstation`
+    `neon green cubes, rendered in blender, trending on artstation, deep colors, cyberpunk aesthetic, striking contrast, hyperrealistic`
   );
   const [qrCodeValue, setQRCodeValue] = useState(`modal.com`);
 
