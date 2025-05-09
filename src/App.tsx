@@ -147,7 +147,10 @@ function App() {
 
   return (
     <Container>
-      <UserInput>
+				<div className="w-full max-w-3xl flex flex-col md:flex-row items-start md:items-center gap-8">
+				<img src="/q-art_logo.svg" alt="Q-Art Codes Logo" className="w-40 md:w-56 lg:w-64 h-auto mb-8 drop-shadow-xl" />
+				</div>
+			<UserInput>
         <Textarea
           placeholder={`Visual content or style to apply to the QR code`}
           value={prompt}
