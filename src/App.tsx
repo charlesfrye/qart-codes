@@ -215,7 +215,12 @@ const UserInput: FC<FormProps> = ({ children }) => (
 
 const Input: FC<InputProps> = ({ ...inputProps }) => (
   <input
-    className="w-full border border-gray-500 rounded-xl py-2.5 px-8 mt-4 first:mt-0 focus-visible:outline-none"
+    className="w-full rounded-xl py-2.5 px-8 mt-4 first:mt-0
+               border border-gray-500
+               bg-green-light/10          /* 10 % opacity */
+               text-green-light font-degular font-light
+               placeholder:text-green-light/60
+               focus-visible:outline-none"
     {...inputProps}
   />
 );
@@ -233,7 +238,12 @@ const Textarea: FC<TextareaProps> = ({ ...inputProps }) => {
   return (
     <textarea
       ref={textAreaRef}
-      className="w-full border border-gray-500 rounded-xl py-2.5 px-8 mt-4 first:mt-0 focus:outline-none resize-none overflow-hidden max-h-60"
+      className="w-full rounded-xl py-2.5 px-8 mt-4 first:mt-0
+                 border border-gray-500
+                 bg-green-light/10         /* 10 % opacity */
+                 text-green-light font-degular font-light leading-relaxed
+                 placeholder:text-green-light/60
+                 focus:outline-none resize-none overflow-hidden max-h-60"
       {...inputProps}
     />
   );
