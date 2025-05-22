@@ -148,16 +148,33 @@ function App() {
   return (
     <Container>
       <UserInput>
+			<div className="mb-6">
+    <label
+      htmlFor="prompt"
+      className="block text-24 font-degular font-light text-green-light mb-2"
+    >
+      Prompt
+    </label>
         <Textarea
           placeholder={`Visual content or style to apply to the QR code`}
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
         />
-        <Input
-          placeholder={`Text to encode, like a URL or your wifi password`}
-          value={qrCodeValue}
-          onChange={(e) => setQRCodeValue(e.target.value)}
-        />
+				</div>
+			<div className="mb-6">
+			<label
+      htmlFor="qrValue"
+      className="block text-24 font-degular font-light text-green-light mb-2"
+    >
+      Link
+    </label>
+
+    <Input
+      id="qrValue"
+      placeholder="Text to encode, like a URL or your Wi-Fi password"
+      value={qrCodeValue}
+      onChange={(e) => setQRCodeValue(e.target.value)}
+    />
         {!loading ? (
           <Button disabled={loading} onClick={generate}>
             Generate Q-Art Code
@@ -165,6 +182,7 @@ function App() {
         ) : (
           <Button onClick={cancel}>Cancel Generation</Button>
         )}
+				</div>
       </UserInput>
       {(loading || (imgSrc && qrCodeDataURL)) && (
         <ResultsContainer>

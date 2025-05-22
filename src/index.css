@@ -1,3 +1,10 @@
+@font-face {
+  font-family: "Degular";
+  src: url("../assets/fonts/DegularDisplay-Light.otf") format("opentype");
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,3 +15,4 @@ body,
   height: 100%;
   font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
 }
+
