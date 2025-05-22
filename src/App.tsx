@@ -147,20 +147,34 @@ function App() {
 
   return (
     <Container>
-				<div className="w-full max-w-3xl flex flex-col md:flex-row items-start md:items-center gap-8">
-				<img src="/q-art_logo.svg" alt="Q-Art Codes Logo" className="w-40 md:w-56 lg:w-64 h-auto mb-8 drop-shadow-xl" />
-				</div>
-			<UserInput>
+      <UserInput>
+			<div className="mb-6">
+    <label
+      htmlFor="prompt"
+      className="block text-24 font-degular font-light text-green-light mb-2"
+    >
+      Prompt
+    </label>
         <Textarea
           placeholder={`Visual content or style to apply to the QR code`}
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
         />
-        <Input
-          placeholder={`Text to encode, like a URL or your wifi password`}
-          value={qrCodeValue}
-          onChange={(e) => setQRCodeValue(e.target.value)}
-        />
+				</div>
+			<div className="mb-6">
+			<label
+      htmlFor="qrValue"
+      className="block text-24 font-degular font-light text-green-light mb-2"
+    >
+      Link
+    </label>
+
+    <Input
+      id="qrValue"
+      placeholder="Text to encode, like a URL or your Wi-Fi password"
+      value={qrCodeValue}
+      onChange={(e) => setQRCodeValue(e.target.value)}
+    />
         {!loading ? (
           <Button disabled={loading} onClick={generate}>
             Generate Q-Art Code
@@ -168,6 +182,7 @@ function App() {
         ) : (
           <Button onClick={cancel}>Cancel Generation</Button>
         )}
+				</div>
       </UserInput>
       {(loading || (imgSrc && qrCodeDataURL)) && (
         <ResultsContainer>
@@ -200,7 +215,12 @@ const UserInput: FC<FormProps> = ({ children }) => (
 
 const Input: FC<InputProps> = ({ ...inputProps }) => (
   <input
-    className="w-full border border-gray-500 rounded-xl py-2.5 px-8 mt-4 first:mt-0 focus-visible:outline-none"
+    className="w-full rounded-xl py-2.5 px-8 mt-4 first:mt-0
+               border border-gray-500
+               bg-green-light/10          /* 10 % opacity */
+               text-green-light font-degular font-light
+               placeholder:text-green-light/60
+               focus-visible:outline-none"
     {...inputProps}
   />
 );
@@ -218,7 +238,12 @@ const Textarea: FC<TextareaProps> = ({ ...inputProps }) => {
   return (
     <textarea
       ref={textAreaRef}
-      className="w-full border border-gray-500 rounded-xl py-2.5 px-8 mt-4 first:mt-0 focus:outline-none resize-none overflow-hidden max-h-60"
+      className="w-full rounded-xl py-2.5 px-8 mt-4 first:mt-0
+                 border border-gray-500
+                 bg-green-light/10         /* 10 % opacity */
+                 text-green-light font-degular font-light leading-relaxed
+                 placeholder:text-green-light/60
+                 focus:outline-none resize-none overflow-hidden max-h-60"
       {...inputProps}
     />
   );
