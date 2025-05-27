@@ -147,8 +147,10 @@ function App() {
 
   return (
     <Container>
+			<div className="w-full max-w-[512px] mx-auto bg-gray rounded-2xl p-8">
+				<img src="/q-art_logo.svg" alt="Q-Art Codes Logo" className="w-40 md:w-56 lg:w-64 h-auto mb-8 drop-shadow-xl" />
+
       <UserInput>
-			<div className="mb-6">
     <label
       htmlFor="prompt"
       className="block text-24 font-degular font-light text-green-light mb-2"
@@ -160,15 +162,12 @@ function App() {
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
         />
-				</div>
-			<div className="mb-6">
 			<label
       htmlFor="qrValue"
       className="block text-24 font-degular font-light text-green-light mb-2"
     >
       Link
     </label>
-
     <Input
       id="qrValue"
       placeholder="Text to encode, like a URL or your Wi-Fi password"
@@ -182,7 +181,6 @@ function App() {
         ) : (
           <Button onClick={cancel}>Cancel Generation</Button>
         )}
-				</div>
       </UserInput>
       {(loading || (imgSrc && qrCodeDataURL)) && (
         <ResultsContainer>
@@ -198,6 +196,7 @@ function App() {
           )}
         </ResultsContainer>
       )}
+			</div>
       <Footer />
     </Container>
   );
@@ -206,7 +205,7 @@ function App() {
 export default App;
 
 const Container = createDivContainer(
-  "min-h-full flex flex-col items-center justify-center p-4 bg-black"
+	"min-h-screen w-full flex flex-col items-center justify-center p-4"
 );
 
 const UserInput: FC<FormProps> = ({ children }) => (
@@ -216,9 +215,8 @@ const UserInput: FC<FormProps> = ({ children }) => (
 const Input: FC<InputProps> = ({ ...inputProps }) => (
   <input
     className="w-full rounded-xl py-2.5 px-8 mt-4 first:mt-0
-               border border-gray-500
-               bg-green-light/10          /* 10 % opacity */
-               text-green-light font-degular font-light
+               bg-green-light/10       
+               text-green-light font-degular 
                placeholder:text-green-light/60
                focus-visible:outline-none"
     {...inputProps}
@@ -239,8 +237,7 @@ const Textarea: FC<TextareaProps> = ({ ...inputProps }) => {
     <textarea
       ref={textAreaRef}
       className="w-full rounded-xl py-2.5 px-8 mt-4 first:mt-0
-                 border border-gray-500
-                 bg-green-light/10         /* 10 % opacity */
+                 bg-green-light/10      
                  text-green-light font-degular font-light leading-relaxed
                  placeholder:text-green-light/60
                  focus:outline-none resize-none overflow-hidden max-h-60"
@@ -251,7 +248,7 @@ const Textarea: FC<TextareaProps> = ({ ...inputProps }) => {
 
 const Button: FC<ButtonProps> = ({ ...buttonProps }) => (
   <button
-    className="w-full mt-4 disabled:bg-gray-300 bg-green hover:bg-green-light text-black rounded-xl py-2.5 px-8 transition-colors font-semibold"
+    className="w-full mt-4 disabled:bg-gray-300 bg-[#7FEE64] … rounded-xl py-2.5 px-8 transition-colors"
     {...buttonProps}
   />
 );
