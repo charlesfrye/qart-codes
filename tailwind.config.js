@@ -7,9 +7,10 @@ export default {
         degular: ["Degular", "ui-sans-serif", "system-ui"],
       },
       colors: {
-        black: `#18181B`,
+        black: `#000000`,
         green: `#84CC16`,
         "green-light": `#DDFFDC`,
+        gray: "#161916",
       },
     },
   },
