@@ -19,6 +19,7 @@ import {
 } from "./lib/types";
 import { wait } from "@laxels/utils";
 
+
 function App() {
   const [prompt, setPrompt] = useState(
     `neon green cubes, rendered in blender, trending on artstation`
@@ -147,13 +148,85 @@ function App() {
 
   return (
     <Container>
-			<div className="w-full max-w-[512px] mx-auto bg-gray rounded-2xl p-8">
-				<img src="/q-art_logo.svg" alt="Q-Art Codes Logo" className="w-40 md:w-56 lg:w-64 h-auto mb-8 drop-shadow-xl" />
+			<div className="relative w-full max-w-[512px] mx-auto rounded-2xl p-8">
+    <div
+      className="
+        absolute top-4 left-4
+        flex items-center gap-1
+        text-14 font-degular text-green-light
+        whitespace-nowrap
+      "
+    >
+      Built with 
+      <img
+        src="/modal_clear_logo.svg"
+        alt="Modal Logo"
+        className="h-4 w-auto ml-1"
+      />
+      Modal
+    </div>
+		<a
+  href="https://modal.com/playground"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="absolute top-4 right-4"
+>
+  <Button
+    className="
+      bg-green-bright
+      rounded-lg
+      flex items-center gap-2
+      px-3 py-1
+      text-14 font-inter
+      whitespace-nowrap
+    "
+  >
+    <span className="flex items-center gap-1">
+      Get Started
+      <img src="top-right_arrow.svg" className="h-4 w-auto" />
+    </span>
+  </Button>
+</a>
 
+    </div>
+		<div className="w-full max-w-[512px] mx-auto bg-gray border-[0.5px] border-[rgba(127,238,100,0.2)] rounded-lg p-8">
+				<div className="flex items-start justify-between mb-4">
+					<div>
+						<img
+      src="/q-art_logo.svg"
+      alt="Q-Art Codes Logo"
+      className="w-40 md:w-56 lg:w-64 h-auto drop-shadow-xl"
+    />
+    <div className="mt-2 text-14 font-inter text-green-light">
+      Create QR Codes with aesthetically pleasing corruptions
+    </div>
+  </div>
+	<a
+  href="https://github.com/charlesfrye/qart-codes"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="
+    inline-flex items-center justify-center
+    gap-2
+    text-green-light font-degular text-sm
+    border border-green-light rounded-full
+    px-4 py-1.5
+    leading-none whitespace-nowrap
+    min-w-0
+  "
+>
+  <img
+    src="/GitHubIcon.svg"
+    alt="GitHub Icon"
+    className="w-4 h-4 shrink-0"
+  />
+  <span className="relative top-[0.5px]">View Code</span>
+</a>
+				</div>
       <UserInput>
     <label
       htmlFor="prompt"
-      className="block text-24 font-degular font-light text-green-light mb-2"
+      className="block text-24 font-degular font-light text-green-light"
     >
       Prompt
     </label>
@@ -188,7 +261,7 @@ function App() {
           {imgSrc && qrCodeDataURL && (
             <>
               <CompositeImage imgSrc={imgSrc} qrCodeDataURL={qrCodeDataURL} />
-              <DownloadButtons>
+							<DownloadButtons>
                 <Button onClick={downloadQArtCode}>Download Q-Art Code</Button>
                 <Button onClick={downloadQRCode}>Download QR Code</Button>
               </DownloadButtons>
@@ -197,7 +270,6 @@ function App() {
         </ResultsContainer>
       )}
 			</div>
-      <Footer />
     </Container>
   );
 }
@@ -257,13 +329,3 @@ const ResultsContainer = createDivContainer(`mt-16 w-full max-w-[512px]`);
 
 const DownloadButtons = createDivContainer(``);
 
-const Footer: FC = () => {
-  return (
-    <footer
-      className="w-full bg-green border-t-4 border-black/75 hover:bg-green-light text-black text-xl py-2.5 px-8 fixed bottom-0  cursor-pointer select-none z-50"
-      onClick={() => (window.location.href = "https://www.modal.com")}
-    >
-      Powered by Modal
-    </footer>
-  );
-};

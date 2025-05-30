@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
 @font-face {
   font-family: "Degular";
   src: url("../assets/fonts/DegularDisplay-Light.otf") format("opentype");
@@ -9,9 +11,9 @@
 @tailwind components;
 @tailwind utilities;
 
-html,
-body {
-	@apply bg-black;
+html, body {
+  @apply bg-black;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
 }
 #root {
   height: 100%;
