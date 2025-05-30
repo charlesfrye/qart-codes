@@ -12,7 +12,7 @@ export default {
         black: `#000000`,
         green: `#84CC16`,
         "green-light": `#DDFFDC`,
-        "green-font": `#7FEE64`,
+        "green-bright": `#7FEE64`,
         gray: "#161916",
       },
     },

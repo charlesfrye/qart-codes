@@ -54,4 +54,4 @@ const Container = createDivContainer(
   "flex items-center justify-center w-full max-w-lg h-96"
 );
 
-const LoadingMessage = createDivContainer("text-sm font-pixel text-green-font");
+const LoadingMessage = createDivContainer("text-sm font-pixel text-green-bright");

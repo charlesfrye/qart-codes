@@ -165,16 +165,22 @@ function App() {
   target="_blank"
   rel="noopener noreferrer"
   className="
-    inline-flex items-center gap-1
-    text-green-light font-degular text-sm whitespace-nowrap
-    border-[0.5px] border-green-light rounded-full
-    px-3 py-1.5
+    inline-flex items-center justify-center
+    gap-2
+    text-green-light font-degular text-sm
+    border border-green-light rounded-full
+    px-4 py-1.5
+    leading-none whitespace-nowrap
+    min-w-0
   "
 >
-  <img src="/GitHubIcon.svg" alt="GitHub Icon" className="w-4 h-4" />
-  <span>View Code</span>
+  <img
+    src="/GitHubIcon.svg"
+    alt="GitHub Icon"
+    className="w-4 h-4 shrink-0"
+  />
+  <span className="relative top-[0.5px]">View Code</span>
 </a>
-
 				</div>
       <UserInput>
     <label
