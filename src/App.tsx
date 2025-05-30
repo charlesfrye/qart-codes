@@ -165,7 +165,30 @@ function App() {
       />
       Modal
     </div>
-		</div>
+		<a
+  href="https://modal.com/playground"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="absolute top-4 right-4"
+>
+  <Button
+    className="
+      bg-green-bright
+      rounded-lg
+      flex items-center gap-2
+      px-3 py-1
+      text-14 font-inter
+      whitespace-nowrap
+    "
+  >
+    <span className="flex items-center gap-1">
+      Get Started
+      <img src="top-right_arrow.svg" className="h-4 w-auto" />
+    </span>
+  </Button>
+</a>
+
+    </div>
 		<div className="w-full max-w-[512px] mx-auto bg-gray border-[0.5px] border-[rgba(127,238,100,0.2)] rounded-lg p-8">
 				<div className="flex items-start justify-between mb-4">
 					<div>
@@ -237,11 +260,11 @@ function App() {
           {loading && <Loader />}
           {imgSrc && qrCodeDataURL && (
             <>
-            <DownloadButtons>
+              <CompositeImage imgSrc={imgSrc} qrCodeDataURL={qrCodeDataURL} />
+							<DownloadButtons>
                 <Button onClick={downloadQArtCode}>Download Q-Art Code</Button>
                 <Button onClick={downloadQRCode}>Download QR Code</Button>
               </DownloadButtons>
-              <CompositeImage imgSrc={imgSrc} qrCodeDataURL={qrCodeDataURL} />
             </>
           )}
         </ResultsContainer>
@@ -305,3 +328,4 @@ const Button: FC<ButtonProps> = ({ ...buttonProps }) => (
 const ResultsContainer = createDivContainer(`mt-16 w-full max-w-[512px]`);
 
 const DownloadButtons = createDivContainer(``);
+
