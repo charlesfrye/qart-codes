@@ -19,6 +19,7 @@ import {
 } from "./lib/types";
 import { wait } from "@laxels/utils";
 
+
 function App() {
   const [prompt, setPrompt] = useState(
     `neon green cubes, rendered in blender, trending on artstation`
@@ -148,12 +149,37 @@ function App() {
   return (
     <Container>
 			<div className="w-full max-w-[512px] mx-auto bg-gray rounded-2xl p-8">
-				<img src="/q-art_logo.svg" alt="Q-Art Codes Logo" className="w-40 md:w-56 lg:w-64 h-auto mb-8 drop-shadow-xl" />
+				<div className="flex items-start justify-between mb-4">
+					<div>
+						<img
+      src="/q-art_logo.svg"
+      alt="Q-Art Codes Logo"
+      className="w-40 md:w-56 lg:w-64 h-auto drop-shadow-xl"
+    />
+    <div className="mt-2 text-14 font-inter text-green-light">
+      Create QR Codes with aesthetically pleasing corruptions
+    </div>
+  </div>
+	<a
+  href="https://github.com/charlesfrye/qart-codes"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="
+    inline-flex items-center gap-1
+    text-green-light font-degular text-sm whitespace-nowrap
+    border-[0.5px] border-green-light rounded-full
+    px-3 py-1.5
+  "
+>
+  <img src="/GitHubIcon.svg" alt="GitHub Icon" className="w-4 h-4" />
+  <span>View Code</span>
+</a>
 
+				</div>
       <UserInput>
     <label
       htmlFor="prompt"
-      className="block text-24 font-degular font-light text-green-light mb-2"
+      className="block text-24 font-degular font-light text-green-light"
     >
       Prompt
     </label>
