@@ -237,11 +237,11 @@ function App() {
           {loading && <Loader />}
           {imgSrc && qrCodeDataURL && (
             <>
-              <CompositeImage imgSrc={imgSrc} qrCodeDataURL={qrCodeDataURL} />
-              <DownloadButtons>
+            <DownloadButtons>
                 <Button onClick={downloadQArtCode}>Download Q-Art Code</Button>
                 <Button onClick={downloadQRCode}>Download QR Code</Button>
               </DownloadButtons>
+              <CompositeImage imgSrc={imgSrc} qrCodeDataURL={qrCodeDataURL} />
             </>
           )}
         </ResultsContainer>
@@ -305,14 +305,3 @@ const Button: FC<ButtonProps> = ({ ...buttonProps }) => (
 const ResultsContainer = createDivContainer(`mt-16 w-full max-w-[512px]`);
 
 const DownloadButtons = createDivContainer(``);
-
-const Footer: FC = () => {
-  return (
-    <footer
-      className="w-full bg-green border-t-4 border-black/75 hover:bg-green-light text-black text-xl py-2.5 px-8 fixed bottom-0  cursor-pointer select-none z-50"
-      onClick={() => (window.location.href = "https://www.modal.com")}
-    >
-      Powered by Modal
-    </footer>
-  );
-};
