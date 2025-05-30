@@ -4,7 +4,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        degular: ["Degular", "ui-sans-serif", "system-ui"],
+        degular: ["Degular", "sans-serif", "system-ui"],
+        inter: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
       },
       colors: {
         black: `#000000`,

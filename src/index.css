@@ -9,9 +9,9 @@
 @tailwind components;
 @tailwind utilities;
 
-html,
-body {
-	@apply bg-black;
+html, body {
+  @apply bg-black;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
 }
 #root {
   height: 100%;
