@@ -148,7 +148,25 @@ function App() {
 
   return (
     <Container>
-			<div className="w-full max-w-[512px] mx-auto bg-gray rounded-2xl p-8">
+			<div className="relative w-full max-w-[512px] mx-auto rounded-2xl p-8">
+    <div
+      className="
+        absolute top-4 left-4
+        flex items-center gap-1
+        text-14 font-degular text-green-light
+        whitespace-nowrap
+      "
+    >
+      Built with 
+      <img
+        src="/modal_clear_logo.svg"
+        alt="Modal Logo"
+        className="h-4 w-auto ml-1"
+      />
+      Modal
+    </div>
+		</div>
+		<div className="w-full max-w-[512px] mx-auto bg-gray border-[0.5px] border-[rgba(127,238,100,0.2)] rounded-lg p-8">
 				<div className="flex items-start justify-between mb-4">
 					<div>
 						<img
@@ -229,7 +247,6 @@ function App() {
         </ResultsContainer>
       )}
 			</div>
-      <Footer />
     </Container>
   );
 }
