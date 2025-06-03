@@ -208,7 +208,7 @@ function App() {
   className="
     inline-flex items-center justify-center
     gap-2
-    text-green-light font-degular text-sm
+    text-green-light font-degular
     border border-green-light rounded-full
     px-4 py-1.5
     leading-none whitespace-nowrap
@@ -226,7 +226,7 @@ function App() {
       <UserInput>
     <label
       htmlFor="prompt"
-      className="block text-3xl font-degular font-light text-green-light"
+      className="block text-3xl font-degular font-light text-green-light mb-1"
     >
       Prompt
     </label>
@@ -237,7 +237,7 @@ function App() {
         />
 			<label
       htmlFor="qrValue"
-      className="block text-3xl font-degular font-light text-green-light mb-2"
+      className="block text-3xl font-degular font-light text-green-light mb-1"
     >
       Link
     </label>
@@ -286,7 +286,7 @@ const UserInput: FC<FormProps> = ({ children }) => (
 
 const Input: FC<InputProps> = ({ ...inputProps }) => (
   <input
-    className="w-full rounded-xl py-2.5 px-8 mt-4 first:mt-0
+    className="w-full rounded-xl py-2.5 px-8 mt-1 first:mt-0
                bg-green-light/10       
                text-green-light font-degular 
                placeholder:text-green-light/60
@@ -308,7 +308,7 @@ const Textarea: FC<TextareaProps> = ({ ...inputProps }) => {
   return (
     <textarea
       ref={textAreaRef}
-      className="w-full rounded-xl py-2.5 px-8 mt-4 first:mt-0
+      className="w-full rounded-xl py-2.5 px-8 mt-1 first:mt-0
                  bg-green-light/10      
                  text-green-light font-degular font-light leading-relaxed
                  placeholder:text-green-light/60
