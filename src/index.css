@@ -1,8 +1,14 @@
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@font-face {
+  font-family: "Pixeloid";
+  src: url("../fonts/PixeloidSans-mLxMm.ttf") format("truetype");
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
 
 @font-face {
   font-family: "Degular";
-  src: url("../assets/fonts/DegularDisplay-Light.otf") format("opentype");
+  src: url("../fonts/DegularDisplay-Light.otf") format("opentype");
   font-weight: 100;
   font-style: normal;
   font-display: swap;
@@ -14,6 +20,7 @@
 html, body {
   @apply bg-black;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
+	font-family: 'Pixeloid', monospace, sans-serif;
 }
 #root {
   height: 100%;

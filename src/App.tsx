@@ -148,10 +148,10 @@ function App() {
 
   return (
     <Container>
-			<div className="relative w-full max-w-[512px] mx-auto rounded-2xl p-8">
+			<div className="relative w-full max-w-[512px] mx-auto rounded-2xl p-5">
+			<div className="flex justify-between items-center">
     <div
       className="
-        absolute top-4 left-4
         flex items-center gap-1
         text-14 font-degular text-green-light
         whitespace-nowrap
@@ -187,7 +187,7 @@ function App() {
     </span>
   </Button>
 </a>
-
+</div>
     </div>
 		<div className="w-full max-w-[512px] mx-auto bg-gray border-[0.5px] border-[rgba(127,238,100,0.2)] rounded-lg p-8">
 				<div className="flex items-start justify-between mb-4">
@@ -197,7 +197,7 @@ function App() {
       alt="Q-Art Codes Logo"
       className="w-40 md:w-56 lg:w-64 h-auto drop-shadow-xl"
     />
-    <div className="mt-2 text-14 font-inter text-green-light">
+    <div className="mt-2 text-xs font-inter font-style: italic text-green-light">
       Create QR Codes with aesthetically pleasing corruptions
     </div>
   </div>
@@ -226,7 +226,7 @@ function App() {
       <UserInput>
     <label
       htmlFor="prompt"
-      className="block text-24 font-degular font-light text-green-light"
+      className="block text-2xl font-degular font-light text-green-light"
     >
       Prompt
     </label>
@@ -237,7 +237,7 @@ function App() {
         />
 			<label
       htmlFor="qrValue"
-      className="block text-24 font-degular font-light text-green-light mb-2"
+      className="block text-2xl font-degular font-light text-green-light mb-2"
     >
       Link
     </label>
