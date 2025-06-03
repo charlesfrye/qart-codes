@@ -148,7 +148,7 @@ function App() {
 
   return (
     <Container>
-			<div className="relative w-full max-w-[512px] mx-auto rounded-2xl p-5">
+			<div className="relative w-full max-w-3xl mx-auto rounded-2xl p-5">
 			<div className="flex justify-between items-center">
     <div
       className="
@@ -189,7 +189,7 @@ function App() {
 </a>
 </div>
     </div>
-		<div className="w-full max-w-[512px] mx-auto bg-gray border-[0.5px] border-[rgba(127,238,100,0.2)] rounded-lg p-8">
+		<div className="w-full max-w-3xl mx-auto bg-gray border-[0.5px] border-[rgba(127,238,100,0.2)] rounded-lg p-8">
 				<div className="flex items-start justify-between mb-4">
 					<div>
 						<img
@@ -226,7 +226,7 @@ function App() {
       <UserInput>
     <label
       htmlFor="prompt"
-      className="block text-2xl font-degular font-light text-green-light"
+      className="block text-3xl font-degular font-light text-green-light"
     >
       Prompt
     </label>
@@ -237,7 +237,7 @@ function App() {
         />
 			<label
       htmlFor="qrValue"
-      className="block text-2xl font-degular font-light text-green-light mb-2"
+      className="block text-3xl font-degular font-light text-green-light mb-2"
     >
       Link
     </label>
@@ -325,7 +325,7 @@ const Button: FC<ButtonProps> = ({ ...buttonProps }) => (
   />
 );
 
-const ResultsContainer = createDivContainer(`mt-16 w-full max-w-[512px]`);
+const ResultsContainer = createDivContainer(`mt-10 w-full max-w-3xl`);
 
 const DownloadButtons = createDivContainer(``);
 
