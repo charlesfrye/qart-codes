@@ -148,47 +148,44 @@ function App() {
 
   return (
     <Container>
-			<div className="relative w-full max-w-3xl mx-auto rounded-2xl p-5">
-			<div className="flex justify-between items-center">
-    <div
-      className="
-        flex items-center gap-1
-        text-14 font-degular text-green-light
-        whitespace-nowrap
-      "
+<div className="flex flex-wrap justify-between items-center w-full mb-4">
+  <div className="flex items-center gap-1 text-14 font-degular text-green-light whitespace-nowrap">
+    Built with
+    <img
+      src="/modal_clear_logo.svg"
+      alt="Modal Logo"
+      className="h-4 w-auto ml-1"
+    />
+    Modal
+  </div>
+
+  <div className="mt-2 sm:mt-0">
+    <a
+      href="https://modal.com/playground"
+      target="_blank"
+      rel="noopener noreferrer"
     >
-      Built with 
-      <img
-        src="/modal_clear_logo.svg"
-        alt="Modal Logo"
-        className="h-4 w-auto ml-1"
-      />
-      Modal
-    </div>
-		<a
-  href="https://modal.com/playground"
-  target="_blank"
-  rel="noopener noreferrer"
-  className="absolute top-4 right-4"
->
-  <Button
-    className="
-      bg-green-bright
-      rounded-lg
-      flex items-center gap-2
-      px-3 py-1
-      text-14 font-inter
-      whitespace-nowrap
-    "
-  >
-    <span className="flex items-center gap-1">
-      Get Started
-      <img src="top-right_arrow.svg" className="h-4 w-auto" />
-    </span>
-  </Button>
-</a>
+      <Button
+        className="
+          bg-green-bright
+          rounded-lg
+          flex items-center gap-2
+          px-3 py-1
+          text-14 font-inter
+          whitespace-nowrap
+        "
+      >
+        <span className="flex items-center gap-1">
+          Get Started
+          <img src="top-right_arrow.svg" className="h-4 w-auto" />
+        </span>
+      </Button>
+    </a>
+  </div>
 </div>
-    </div>
+
+
+
 		<div className="w-full max-w-3xl mx-auto bg-gray border-[0.5px] border-[rgba(127,238,100,0.2)] rounded-lg p-8">
 				<div className="flex items-start justify-between mb-4">
 					<div>
@@ -205,15 +202,7 @@ function App() {
   href="https://github.com/charlesfrye/qart-codes"
   target="_blank"
   rel="noopener noreferrer"
-  className="
-    inline-flex items-center justify-center
-    gap-2
-    text-green-light font-degular
-    border border-green-light rounded-full
-    px-4 py-1.5
-    leading-none whitespace-nowrap
-    min-w-0
-  "
+  className="inline-flex items-center justify-center gap-2 text-green-light font-degular border border-green-light rounded-full px-3 py-1.5 leading-none whitespace-nowrap max-w-full text-sm sm:text-base"
 >
   <img
     src="/GitHubIcon.svg"
@@ -260,7 +249,7 @@ function App() {
           {loading && <Loader />}
           {imgSrc && qrCodeDataURL && (
             <>
-						<div className="flex justify-center items-start gap-6 w-full">
+						<div className="flex flex-col md:flex-row justify-center items-start gap-6 w-full">
 							<div className="flex-shrink-0 max-w-[512px] w-full">
               <CompositeImage imgSrc={imgSrc} qrCodeDataURL={qrCodeDataURL} />
 							</div>
