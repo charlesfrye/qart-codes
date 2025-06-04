@@ -148,48 +148,45 @@ function App() {
 
   return (
     <Container>
-			<div className="relative w-full max-w-[512px] mx-auto rounded-2xl p-8">
-    <div
-      className="
-        absolute top-4 left-4
-        flex items-center gap-1
-        text-14 font-degular text-green-light
-        whitespace-nowrap
-      "
-    >
-      Built with 
-      <img
-        src="/modal_clear_logo.svg"
-        alt="Modal Logo"
-        className="h-4 w-auto ml-1"
-      />
-      Modal
-    </div>
-		<a
-  href="https://modal.com/playground"
-  target="_blank"
-  rel="noopener noreferrer"
-  className="absolute top-4 right-4"
->
-  <Button
-    className="
-      bg-green-bright
-      rounded-lg
-      flex items-center gap-2
-      px-3 py-1
-      text-14 font-inter
-      whitespace-nowrap
-    "
-  >
-    <span className="flex items-center gap-1">
-      Get Started
-      <img src="top-right_arrow.svg" className="h-4 w-auto" />
-    </span>
-  </Button>
-</a>
+<div className="flex flex-wrap justify-between items-center w-full mb-4">
+  <div className="flex items-center gap-1 text-14 font-degular text-green-light whitespace-nowrap">
+    Built with
+    <img
+      src="/modal_clear_logo.svg"
+      alt="Modal Logo"
+      className="h-4 w-auto ml-1"
+    />
+    Modal
+  </div>
 
-    </div>
-		<div className="w-full max-w-[512px] mx-auto bg-gray border-[0.5px] border-[rgba(127,238,100,0.2)] rounded-lg p-8">
+  <div className="mt-2 sm:mt-0">
+    <a
+      href="https://modal.com/playground"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <Button
+        className="
+          bg-green-bright
+          rounded-lg
+          flex items-center gap-2
+          px-3 py-1
+          text-14 font-inter
+          whitespace-nowrap
+        "
+      >
+        <span className="flex items-center gap-1">
+          Get Started
+          <img src="top-right_arrow.svg" className="h-4 w-auto" />
+        </span>
+      </Button>
+    </a>
+  </div>
+</div>
+
+
+
+		<div className="w-full max-w-3xl mx-auto bg-gray border-[0.5px] border-[rgba(127,238,100,0.2)] rounded-lg p-8">
 				<div className="flex items-start justify-between mb-4">
 					<div>
 						<img
@@ -197,7 +194,7 @@ function App() {
       alt="Q-Art Codes Logo"
       className="w-40 md:w-56 lg:w-64 h-auto drop-shadow-xl"
     />
-    <div className="mt-2 text-14 font-inter text-green-light">
+    <div className="mt-2 text-xs font-inter font-style: italic text-green-light">
       Create QR Codes with aesthetically pleasing corruptions
     </div>
   </div>
@@ -205,15 +202,7 @@ function App() {
   href="https://github.com/charlesfrye/qart-codes"
   target="_blank"
   rel="noopener noreferrer"
-  className="
-    inline-flex items-center justify-center
-    gap-2
-    text-green-light font-degular text-sm
-    border border-green-light rounded-full
-    px-4 py-1.5
-    leading-none whitespace-nowrap
-    min-w-0
-  "
+  className="inline-flex items-center justify-center gap-2 text-green-light font-degular border border-green-light rounded-full px-3 py-1.5 leading-none whitespace-nowrap max-w-full text-sm sm:text-base"
 >
   <img
     src="/GitHubIcon.svg"
@@ -226,7 +215,7 @@ function App() {
       <UserInput>
     <label
       htmlFor="prompt"
-      className="block text-24 font-degular font-light text-green-light"
+      className="block text-3xl font-degular font-light text-green-light mb-1"
     >
       Prompt
     </label>
@@ -237,7 +226,7 @@ function App() {
         />
 			<label
       htmlFor="qrValue"
-      className="block text-24 font-degular font-light text-green-light mb-2"
+      className="block text-3xl font-degular font-light text-green-light mb-1"
     >
       Link
     </label>
@@ -260,11 +249,21 @@ function App() {
           {loading && <Loader />}
           {imgSrc && qrCodeDataURL && (
             <>
+						<div className="flex flex-col md:flex-row justify-center items-start gap-6 w-full">
+							<div className="flex-shrink-0 max-w-[512px] w-full">
               <CompositeImage imgSrc={imgSrc} qrCodeDataURL={qrCodeDataURL} />
+							</div>
 							<DownloadButtons>
-                <Button onClick={downloadQArtCode}>Download Q-Art Code</Button>
-                <Button onClick={downloadQRCode}>Download QR Code</Button>
+                <SmallButton onClick={downloadQArtCode}>
+									<img src='/download_icon.svg' className="w-4 h-4 opacity-[0.40]"/>
+									Download Q-Art Code
+									</SmallButton>
+                <SmallButton onClick={downloadQRCode}>
+									<img src='/download_icon.svg' className="w-4 h-4 opacity-[0.40]"/>
+									Download QR Code
+									</SmallButton>
               </DownloadButtons>
+							</div>
             </>
           )}
         </ResultsContainer>
@@ -286,7 +285,7 @@ const UserInput: FC<FormProps> = ({ children }) => (
 
 const Input: FC<InputProps> = ({ ...inputProps }) => (
   <input
-    className="w-full rounded-xl py-2.5 px-8 mt-4 first:mt-0
+    className="w-full rounded-xl py-2.5 px-8 mt-1 first:mt-0
                bg-green-light/10       
                text-green-light font-degular 
                placeholder:text-green-light/60
@@ -308,7 +307,7 @@ const Textarea: FC<TextareaProps> = ({ ...inputProps }) => {
   return (
     <textarea
       ref={textAreaRef}
-      className="w-full rounded-xl py-2.5 px-8 mt-4 first:mt-0
+      className="w-full rounded-xl py-2.5 px-8 mt-1 first:mt-0
                  bg-green-light/10      
                  text-green-light font-degular font-light leading-relaxed
                  placeholder:text-green-light/60
@@ -325,7 +324,21 @@ const Button: FC<ButtonProps> = ({ ...buttonProps }) => (
   />
 );
 
-const ResultsContainer = createDivContainer(`mt-16 w-full max-w-[512px]`);
+const SmallButton: FC<ButtonProps> = ({ className = "", ...buttonProps }) => (
+  <button
+    className={`
+			flex items-center gap-1
+      bg-green-light/5 text-green-light/40 text-sm whitespace-nowrap
+      rounded-md px-6 py-2 transition-colors 
+			border border-green-light/5 ${className}
+    `}
+    {...buttonProps}
+  />
+);
 
-const DownloadButtons = createDivContainer(``);
+
+const ResultsContainer = createDivContainer(`mt-10 w-full max-w-3xl`);
+
+const DownloadButtons = createDivContainer(`flex flex-col gap-2 mt-2`);
+
 
