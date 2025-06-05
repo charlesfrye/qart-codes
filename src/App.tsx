@@ -148,43 +148,42 @@ function App() {
 
   return (
     <Container>
-<div className="flex flex-wrap justify-between items-center w-full mb-4">
-  <div className="flex items-center gap-1 text-14 font-degular text-green-light whitespace-nowrap">
-    Built with
-    <img
-      src="/modal_clear_logo.svg"
-      alt="Modal Logo"
-      className="h-4 w-auto ml-1"
-    />
-    Modal
-  </div>
+<div className="w-full max-w-3xl mx-auto px-5 mb-4">
+  <div className="flex items-center justify-between gap-2 w-full text-sm sm:text-base">
+    <div className="flex items-center gap-1 sm:gap-2 text-green-light font-degular whitespace-nowrap overflow-hidden">
+      <span className="truncate">Built with</span>
+      <img
+        src="/modal_clear_logo.svg"
+        alt="Modal Logo"
+        className="h-4 w-auto sm:h-5"
+      />
+      <span className="truncate">Modal</span>
+    </div>
 
-  <div className="mt-2 sm:mt-0">
     <a
       href="https://modal.com/playground"
       target="_blank"
       rel="noopener noreferrer"
+      className="min-w-0 shrink max-w-[50%]"
     >
-      <Button
+      <button
         className="
-          bg-green-bright
-          rounded-lg
-          flex items-center gap-2
-          px-3 py-1
-          text-14 font-inter
-          whitespace-nowrap
+          flex items-center gap-1 sm:gap-2
+          bg-green-bright rounded-lg
+          px-2 sm:px-3 py-1
+          text-xs sm:text-14 font-inter
+          whitespace-nowrap w-full overflow-hidden
         "
       >
-        <span className="flex items-center gap-1">
-          Get Started
-          <img src="top-right_arrow.svg" className="h-4 w-auto" />
-        </span>
-      </Button>
+        <span className="truncate">Get Started</span>
+        <img
+          src="top-right_arrow.svg"
+          className="h-4 w-auto shrink-0"
+        />
+      </button>
     </a>
   </div>
 </div>
-
-
 
 		<div className="w-full max-w-3xl mx-auto bg-gray border-[0.5px] border-[rgba(127,238,100,0.2)] rounded-lg p-8">
 				<div className="flex items-start justify-between mb-4">
