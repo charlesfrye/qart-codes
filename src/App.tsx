@@ -148,10 +148,10 @@ function App() {
 
   return (
     <Container>
-			<div className="relative w-full max-w-[512px] mx-auto rounded-2xl p-8">
+			<div className="relative w-full max-w-3xl mx-auto rounded-2xl p-5">
+			<div className="flex justify-between items-center">
     <div
       className="
-        absolute top-4 left-4
         flex items-center gap-1
         text-14 font-degular text-green-light
         whitespace-nowrap
@@ -187,9 +187,9 @@ function App() {
     </span>
   </Button>
 </a>
-
+</div>
     </div>
-		<div className="w-full max-w-[512px] mx-auto bg-gray border-[0.5px] border-[rgba(127,238,100,0.2)] rounded-lg p-8">
+		<div className="w-full max-w-3xl mx-auto bg-gray border-[0.5px] border-[rgba(127,238,100,0.2)] rounded-lg p-8">
 				<div className="flex items-start justify-between mb-4">
 					<div>
 						<img
@@ -197,7 +197,7 @@ function App() {
       alt="Q-Art Codes Logo"
       className="w-40 md:w-56 lg:w-64 h-auto drop-shadow-xl"
     />
-    <div className="mt-2 text-14 font-inter text-green-light">
+    <div className="mt-2 text-xs font-inter font-style: italic text-green-light">
       Create QR Codes with aesthetically pleasing corruptions
     </div>
   </div>
@@ -208,7 +208,7 @@ function App() {
   className="
     inline-flex items-center justify-center
     gap-2
-    text-green-light font-degular text-sm
+    text-green-light font-degular
     border border-green-light rounded-full
     px-4 py-1.5
     leading-none whitespace-nowrap
@@ -226,7 +226,7 @@ function App() {
       <UserInput>
     <label
       htmlFor="prompt"
-      className="block text-24 font-degular font-light text-green-light"
+      className="block text-3xl font-degular font-light text-green-light mb-1"
     >
       Prompt
     </label>
@@ -237,7 +237,7 @@ function App() {
         />
 			<label
       htmlFor="qrValue"
-      className="block text-24 font-degular font-light text-green-light mb-2"
+      className="block text-3xl font-degular font-light text-green-light mb-1"
     >
       Link
     </label>
@@ -286,7 +286,7 @@ const UserInput: FC<FormProps> = ({ children }) => (
 
 const Input: FC<InputProps> = ({ ...inputProps }) => (
   <input
-    className="w-full rounded-xl py-2.5 px-8 mt-4 first:mt-0
+    className="w-full rounded-xl py-2.5 px-8 mt-1 first:mt-0
                bg-green-light/10       
                text-green-light font-degular 
                placeholder:text-green-light/60
@@ -308,7 +308,7 @@ const Textarea: FC<TextareaProps> = ({ ...inputProps }) => {
   return (
     <textarea
       ref={textAreaRef}
-      className="w-full rounded-xl py-2.5 px-8 mt-4 first:mt-0
+      className="w-full rounded-xl py-2.5 px-8 mt-1 first:mt-0
                  bg-green-light/10      
                  text-green-light font-degular font-light leading-relaxed
                  placeholder:text-green-light/60
@@ -325,7 +325,7 @@ const Button: FC<ButtonProps> = ({ ...buttonProps }) => (
   />
 );
 
-const ResultsContainer = createDivContainer(`mt-16 w-full max-w-[512px]`);
+const ResultsContainer = createDivContainer(`mt-10 w-full max-w-3xl`);
 
 const DownloadButtons = createDivContainer(``);
 
