@@ -260,11 +260,21 @@ function App() {
           {loading && <Loader />}
           {imgSrc && qrCodeDataURL && (
             <>
+						<div className="flex justify-center items-start gap-6 w-full">
+							<div className="flex-shrink-0 max-w-[512px] w-full">
               <CompositeImage imgSrc={imgSrc} qrCodeDataURL={qrCodeDataURL} />
+							</div>
 							<DownloadButtons>
-                <Button onClick={downloadQArtCode}>Download Q-Art Code</Button>
-                <Button onClick={downloadQRCode}>Download QR Code</Button>
+                <SmallButton onClick={downloadQArtCode}>
+									<img src='/download_icon.svg' className="w-4 h-4 opacity-[0.40]"/>
+									Download Q-Art Code
+									</SmallButton>
+                <SmallButton onClick={downloadQRCode}>
+									<img src='/download_icon.svg' className="w-4 h-4 opacity-[0.40]"/>
+									Download QR Code
+									</SmallButton>
               </DownloadButtons>
+							</div>
             </>
           )}
         </ResultsContainer>
@@ -325,7 +335,21 @@ const Button: FC<ButtonProps> = ({ ...buttonProps }) => (
   />
 );
 
+const SmallButton: FC<ButtonProps> = ({ className = "", ...buttonProps }) => (
+  <button
+    className={`
+			flex items-center gap-1
+      bg-green-light/5 text-green-light/40 text-sm whitespace-nowrap
+      rounded-md px-6 py-2 transition-colors 
+			border border-green-light/5 ${className}
+    `}
+    {...buttonProps}
+  />
+);
+
+
 const ResultsContainer = createDivContainer(`mt-10 w-full max-w-3xl`);
 
-const DownloadButtons = createDivContainer(``);
+const DownloadButtons = createDivContainer(`flex flex-col gap-2 mt-2`);
+
 
