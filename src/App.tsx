@@ -159,7 +159,6 @@ function App() {
       />
       <span className="truncate">Modal</span>
     </div>
-
     <a
       href="https://modal.com/playground"
       target="_blank"
@@ -184,7 +183,6 @@ function App() {
     </a>
   </div>
 </div>
-
 		<div className="w-full max-w-3xl mx-auto bg-gray border-[0.5px] border-[rgba(127,238,100,0.2)] rounded-lg p-8">
 				<div className="flex items-start justify-between mb-4">
 					<div>
