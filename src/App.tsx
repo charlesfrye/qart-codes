@@ -209,38 +209,42 @@ function App() {
   <span className="relative top-[0.5px]">View Code</span>
 </a>
 				</div>
-      <UserInput>
-    <label
-      htmlFor="prompt"
-      className="block text-3xl font-degular font-light text-green-light mb-1"
-    >
-      Prompt
-    </label>
-        <Textarea
-          placeholder={`Visual content or style to apply to the QR code`}
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-        />
-			<label
-      htmlFor="qrValue"
-      className="block text-3xl font-degular font-light text-green-light mb-1"
-    >
-      Link
-    </label>
-    <Input
-      id="qrValue"
-      placeholder="Text to encode, like a URL or your Wi-Fi password"
-      value={qrCodeValue}
-      onChange={(e) => setQRCodeValue(e.target.value)}
-    />
-        {!loading ? (
-          <Button disabled={loading} onClick={generate}>
-            Generate Q-Art Code
-          </Button>
-        ) : (
-          <Button onClick={cancel}>Cancel Generation</Button>
-        )}
-      </UserInput>
+				<UserInput>
+  <div className="space-y-6">
+    <div>
+      <label
+        htmlFor="prompt"
+        className="block text-3xl font-degular font-light text-green-light mb-2"
+      >
+        Prompt
+      </label>
+      <Textarea
+        placeholder="Visual content or style to apply to the QR code"
+        value={prompt}
+        onChange={(e) => setPrompt(e.target.value)}
+      />
+    </div>
+
+    <div>
+      <label
+        htmlFor="qrValue"
+        className="block text-3xl font-degular font-light text-green-light mb-2"
+      >
+        Link
+      </label>
+      <Input
+        id="qrValue"
+        placeholder="Text to encode, like a URL or your Wi-Fi password"
+        value={qrCodeValue}
+        onChange={(e) => setQRCodeValue(e.target.value)}
+      />
+    </div>
+
+    <Button disabled={loading} onClick={loading ? cancel : generate}>
+      {loading ? "Cancel Generation" : "Generate Q-Art Code"}
+    </Button>
+  </div>
+</UserInput>
       {(loading || (imgSrc && qrCodeDataURL)) && (
         <ResultsContainer>
           {loading && <Loader />}
