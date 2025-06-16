@@ -153,9 +153,9 @@ function App() {
     <div className="flex items-center gap-1 sm:gap-2 text-green-light font-degular whitespace-nowrap overflow-hidden">
       <span className="truncate">Built with</span>
       <img
-        src="/modal_clear_logo.svg"
+        src="/modal.svg"
         alt="Modal Logo"
-        className="h-4 w-auto sm:h-5"
+        className="h-4 w-auto sm:h-6"
       />
       <span className="truncate">Modal</span>
     </div>
@@ -174,7 +174,7 @@ function App() {
           whitespace-nowrap w-full overflow-hidden
         "
       >
-        <span className="truncate">Get Started</span>
+        <span className="truncate">Try Modal</span>
         <img
           src="top-right_arrow.svg"
           className="h-4 w-auto shrink-0"
@@ -283,8 +283,8 @@ const UserInput: FC<FormProps> = ({ children }) => (
 const Input: FC<InputProps> = ({ ...inputProps }) => (
   <input
     className="w-full rounded-xl py-2.5 px-8 mt-1 first:mt-0
-               bg-green-light/10       
-               text-green-light font-degular 
+               bg-green-light/10
+               text-green-light font-degular
                placeholder:text-green-light/60
                focus-visible:outline-none"
     {...inputProps}
@@ -305,7 +305,7 @@ const Textarea: FC<TextareaProps> = ({ ...inputProps }) => {
     <textarea
       ref={textAreaRef}
       className="w-full rounded-xl py-2.5 px-8 mt-1 first:mt-0
-                 bg-green-light/10      
+                 bg-green-light/10
                  text-green-light font-degular font-light leading-relaxed
                  placeholder:text-green-light/60
                  focus:outline-none resize-none overflow-hidden max-h-60"
@@ -326,7 +326,7 @@ const SmallButton: FC<ButtonProps> = ({ className = "", ...buttonProps }) => (
     className={`
 			flex items-center gap-1
       bg-green-light/5 text-green-light/40 text-sm whitespace-nowrap
-      rounded-md px-6 py-2 transition-colors 
+      rounded-md px-6 py-2 transition-colors
 			border border-green-light/5 ${className}
     `}
     {...buttonProps}
@@ -337,5 +337,3 @@ const SmallButton: FC<ButtonProps> = ({ className = "", ...buttonProps }) => (
 const ResultsContainer = createDivContainer(`mt-10 w-full max-w-3xl`);
 
 const DownloadButtons = createDivContainer(`flex flex-col gap-2 mt-2`);
-
-
