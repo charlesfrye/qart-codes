@@ -209,61 +209,66 @@ function App() {
   <span className="relative top-[0.5px]">View Code</span>
 </a>
 				</div>
-      <UserInput>
-    <label
-      htmlFor="prompt"
-      className="block text-3xl font-degular font-light text-green-light mb-1"
-    >
-      Prompt
-    </label>
-        <Textarea
-          placeholder={`Visual content or style to apply to the QR code`}
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-        />
-			<label
-      htmlFor="qrValue"
-      className="block text-3xl font-degular font-light text-green-light mb-1"
-    >
-      Link
-    </label>
-    <Input
-      id="qrValue"
-      placeholder="Text to encode, like a URL or your Wi-Fi password"
-      value={qrCodeValue}
-      onChange={(e) => setQRCodeValue(e.target.value)}
-    />
-        {!loading ? (
-          <Button disabled={loading} onClick={generate}>
-            Generate Q-Art Code
-          </Button>
-        ) : (
-          <Button onClick={cancel}>Cancel Generation</Button>
-        )}
-      </UserInput>
+				<UserInput>
+  <div> 
+    <div className="flex flex-col gap-2">
+      <label
+        htmlFor="prompt"
+        className="text-3xl font-degular font-light text-green-light"
+      >
+        Prompt
+      </label>
+      <Textarea
+        placeholder="Visual content or style to apply to the QR code"
+        value={prompt}
+        onChange={(e) => setPrompt(e.target.value)}
+      />
+    </div>
+
+    <div className="flex flex-col gap-2 mt-6">
+      <label
+        htmlFor="qrValue"
+        className="text-3xl font-degular font-light text-green-light"
+      >
+        Link
+      </label>
+      <Input
+        id="qrValue"
+        placeholder="Text to encode, like a URL or your Wi-Fi password"
+        value={qrCodeValue}
+        onChange={(e) => setQRCodeValue(e.target.value)}
+      />
+    </div>
+
+    <Button disabled={loading} onClick={loading ? cancel : generate}>
+      {loading ? "Cancel Generation" : "Generate Q-Art Code"}
+    </Button>
+  </div>
+</UserInput>
       {(loading || (imgSrc && qrCodeDataURL)) && (
-        <ResultsContainer>
-          {loading && <Loader />}
-          {imgSrc && qrCodeDataURL && (
-            <>
-						<div className="flex flex-col md:flex-row justify-center items-start gap-6 w-full">
-							<div className="flex-shrink-0 max-w-[512px] w-full">
-              <CompositeImage imgSrc={imgSrc} qrCodeDataURL={qrCodeDataURL} />
-							</div>
-							<DownloadButtons>
-                <SmallButton onClick={downloadQArtCode}>
-									<img src='/download_icon.svg' className="w-4 h-4 opacity-[0.40]"/>
-									Download Q-Art Code
-									</SmallButton>
-                <SmallButton onClick={downloadQRCode}>
-									<img src='/download_icon.svg' className="w-4 h-4 opacity-[0.40]"/>
-									Download QR Code
-									</SmallButton>
-              </DownloadButtons>
-							</div>
-            </>
-          )}
-        </ResultsContainer>
+			<ResultsContainer>
+			{loading && <Loader />}
+			{imgSrc && qrCodeDataURL && (
+				<div className="flex flex-row items-start gap-4 w-full overflow-hidden">
+  <div className="flex-[1_1_0] max-w-[60%]">
+    <CompositeImage imgSrc={imgSrc} qrCodeDataURL={qrCodeDataURL} />
+  </div>
+
+  <div className="flex flex-col gap-2 flex-shrink-0 max-w-[40%] w-full">
+    <SmallButton onClick={downloadQArtCode}>
+      <img src="/download_icon.svg" className="w-4 h-4 opacity-40" />
+      <span className="truncate">Download Q-Art Code</span>
+    </SmallButton>
+    <SmallButton onClick={downloadQRCode}>
+      <img src="/download_icon.svg" className="w-4 h-4 opacity-40" />
+      <span className="truncate">Download QR Code</span>
+    </SmallButton>
+  </div>
+</div>
+			)}
+		</ResultsContainer>
+		
+
       )}
 			</div>
     </Container>
@@ -282,9 +287,9 @@ const UserInput: FC<FormProps> = ({ children }) => (
 
 const Input: FC<InputProps> = ({ ...inputProps }) => (
   <input
-    className="w-full rounded-xl py-2.5 px-8 mt-1 first:mt-0
-               bg-green-light/10
-               text-green-light font-degular
+    className="w-full rounded-xl py-2.5 px-8 first:mt-0
+               bg-green-light/10       
+               text-green-light font-degular 
                placeholder:text-green-light/60
                focus-visible:outline-none"
     {...inputProps}
@@ -304,8 +309,8 @@ const Textarea: FC<TextareaProps> = ({ ...inputProps }) => {
   return (
     <textarea
       ref={textAreaRef}
-      className="w-full rounded-xl py-2.5 px-8 mt-1 first:mt-0
-                 bg-green-light/10
+      className="w-full rounded-xl py-2.5 px-8 first:mt-0
+                 bg-green-light/10      
                  text-green-light font-degular font-light leading-relaxed
                  placeholder:text-green-light/60
                  focus:outline-none resize-none overflow-hidden max-h-60"
@@ -323,12 +328,13 @@ const Button: FC<ButtonProps> = ({ ...buttonProps }) => (
 
 const SmallButton: FC<ButtonProps> = ({ className = "", ...buttonProps }) => (
   <button
-    className={`
-			flex items-center gap-1
-      bg-green-light/5 text-green-light/40 text-sm whitespace-nowrap
-      rounded-md px-6 py-2 transition-colors
-			border border-green-light/5 ${className}
-    `}
+	className={`
+		flex items-center gap-1
+		bg-green-light/5 text-green-light/40 text-[11px]
+		rounded-md px-1 py-2 transition-colors
+		border border-green-light/5 min-w-0 max-w-[160px] ${className}
+	`}	
+
     {...buttonProps}
   />
 );
@@ -336,4 +342,3 @@ const SmallButton: FC<ButtonProps> = ({ className = "", ...buttonProps }) => (
 
 const ResultsContainer = createDivContainer(`mt-10 w-full max-w-3xl`);
 
-const DownloadButtons = createDivContainer(`flex flex-col gap-2 mt-2`);
