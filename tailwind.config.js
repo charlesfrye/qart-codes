@@ -3,10 +3,17 @@ export default {
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
+      fontFamily: {
+        degular: ["Degular", "sans-serif", "system-ui"],
+        inter: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+        pixel: ["Pixeloid", "monospace", "sans-serif", "system-ui"],
+      },
       colors: {
-        black: `#18181B`,
+        black: `#000000`,
         green: `#84CC16`,
-        "green-light": `#7FEE64`,
+        "green-light": `#DDFFDC`,
+        "green-bright": `#7FEE64`,
+        gray: "#161916",
       },
     },
   },

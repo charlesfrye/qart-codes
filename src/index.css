@@ -1,10 +1,29 @@
+@font-face {
+  font-family: "Pixeloid";
+  src: url("../fonts/PixeloidSans-mLxMm.ttf") format("truetype");
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Degular";
+  src: url("../fonts/DegularDisplay-Light.otf") format("opentype");
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-html,
-body,
+html, body {
+  @apply bg-black;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
+	font-family: 'Pixeloid', monospace, sans-serif;
+}
 #root {
   height: 100%;
   font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
 }
+

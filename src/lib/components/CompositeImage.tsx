@@ -126,14 +126,37 @@ type SliderProps = {
   onChange: (newVal: number) => void;
 };
 
-const Slider: FC<SliderProps> = ({ value, onChange }) => (
-  <input
-    type="range"
-    className="w-full mt-4"
-    value={value}
-    onChange={(e) => onChange(Number(e.target.value))}
-  />
-);
+const Slider: FC<SliderProps> = ({ value, onChange }) => {
+  const sliderStyle = {
+    background: `linear-gradient(to right, #7FEE64 0%, #7FEE64 ${value}%, #7FEE6420 ${value}%, #7FEE6420 100%)`,
+  };
+
+  return (
+    <input
+      type="range"
+      min={0}
+      max={100}
+      value={value}
+      onChange={(e) => onChange(Number(e.target.value))}
+      className="
+        w-full mt-4 h-[4px] appearance-none rounded-md
+        [&::-webkit-slider-thumb]:appearance-none
+        [&::-webkit-slider-thumb]:h-3
+        [&::-webkit-slider-thumb]:w-3
+        [&::-webkit-slider-thumb]:rounded-full
+        [&::-webkit-slider-thumb]:bg-[#7FEE64]
+        [&::-webkit-slider-thumb]:mt-[0px]
+        [&::-moz-range-thumb]:h-3
+        [&::-moz-range-thumb]:w-3
+        [&::-moz-range-thumb]:rounded-full
+        [&::-moz-range-thumb]:bg-[#7FEE64]
+        cursor-pointer
+      "
+      style={sliderStyle}
+    />
+  );
+};
+
 
 const Image: FC<ImgProps> = ({ ...imgProps }) => (
   <img className="max-w-none aspect-square absolute" {...imgProps} />
