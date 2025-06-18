@@ -210,11 +210,11 @@ function App() {
 </a>
 				</div>
 				<UserInput>
-  <div className="space-y-6">
-    <div>
+  <div> 
+    <div className="flex flex-col gap-2">
       <label
         htmlFor="prompt"
-        className="block text-3xl font-degular font-light text-green-light mb-2"
+        className="text-3xl font-degular font-light text-green-light"
       >
         Prompt
       </label>
@@ -225,10 +225,10 @@ function App() {
       />
     </div>
 
-    <div>
+    <div className="flex flex-col gap-2 mt-6">
       <label
         htmlFor="qrValue"
-        className="block text-3xl font-degular font-light text-green-light mb-2"
+        className="text-3xl font-degular font-light text-green-light"
       >
         Link
       </label>
@@ -286,7 +286,7 @@ const UserInput: FC<FormProps> = ({ children }) => (
 
 const Input: FC<InputProps> = ({ ...inputProps }) => (
   <input
-    className="w-full rounded-xl py-2.5 px-8 mt-1 first:mt-0
+    className="w-full rounded-xl py-2.5 px-8 first:mt-0
                bg-green-light/10       
                text-green-light font-degular 
                placeholder:text-green-light/60
@@ -308,7 +308,7 @@ const Textarea: FC<TextareaProps> = ({ ...inputProps }) => {
   return (
     <textarea
       ref={textAreaRef}
-      className="w-full rounded-xl py-2.5 px-8 mt-1 first:mt-0
+      className="w-full rounded-xl py-2.5 px-8 first:mt-0
                  bg-green-light/10      
                  text-green-light font-degular font-light leading-relaxed
                  placeholder:text-green-light/60
