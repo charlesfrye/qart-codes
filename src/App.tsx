@@ -153,9 +153,9 @@ function App() {
     <div className="flex items-center gap-1 sm:gap-2 text-green-light font-degular whitespace-nowrap overflow-hidden">
       <span className="truncate">Built with</span>
       <img
-        src="/modal_clear_logo.svg"
+        src="/modal.svg"
         alt="Modal Logo"
-        className="h-4 w-auto sm:h-5"
+        className="h-4 w-auto sm:h-6"
       />
       <span className="truncate">Modal</span>
     </div>
@@ -174,7 +174,7 @@ function App() {
           whitespace-nowrap w-full overflow-hidden
         "
       >
-        <span className="truncate">Get Started</span>
+        <span className="truncate">Try Modal</span>
         <img
           src="top-right_arrow.svg"
           className="h-4 w-auto shrink-0"
@@ -334,12 +334,11 @@ const SmallButton: FC<ButtonProps> = ({ className = "", ...buttonProps }) => (
 		rounded-md px-1 py-2 transition-colors
 		border border-green-light/5 min-w-0 max-w-[160px] ${className}
 	`}	
+
     {...buttonProps}
   />
 );
 
 
 const ResultsContainer = createDivContainer(`mt-10 w-full max-w-3xl`);
-
-
 
