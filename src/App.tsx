@@ -246,28 +246,29 @@ function App() {
   </div>
 </UserInput>
       {(loading || (imgSrc && qrCodeDataURL)) && (
-        <ResultsContainer>
-          {loading && <Loader />}
-          {imgSrc && qrCodeDataURL && (
-            <>
-						<div className="flex flex-col md:flex-row justify-center items-start gap-6 w-full">
-							<div className="flex-shrink-0 max-w-[512px] w-full">
-              <CompositeImage imgSrc={imgSrc} qrCodeDataURL={qrCodeDataURL} />
-							</div>
-							<DownloadButtons>
-                <SmallButton onClick={downloadQArtCode}>
-									<img src='/download_icon.svg' className="w-4 h-4 opacity-[0.40]"/>
-									Download Q-Art Code
-									</SmallButton>
-                <SmallButton onClick={downloadQRCode}>
-									<img src='/download_icon.svg' className="w-4 h-4 opacity-[0.40]"/>
-									Download QR Code
-									</SmallButton>
-              </DownloadButtons>
-							</div>
-            </>
-          )}
-        </ResultsContainer>
+			<ResultsContainer>
+			{loading && <Loader />}
+			{imgSrc && qrCodeDataURL && (
+				<div className="flex flex-row items-start gap-4 w-full overflow-hidden">
+  <div className="flex-[1_1_0] max-w-[60%]">
+    <CompositeImage imgSrc={imgSrc} qrCodeDataURL={qrCodeDataURL} />
+  </div>
+
+  <div className="flex flex-col gap-2 flex-shrink-0 max-w-[40%] w-full">
+    <SmallButton onClick={downloadQArtCode}>
+      <img src="/download_icon.svg" className="w-4 h-4 opacity-40" />
+      <span className="truncate">Download Q-Art Code</span>
+    </SmallButton>
+    <SmallButton onClick={downloadQRCode}>
+      <img src="/download_icon.svg" className="w-4 h-4 opacity-40" />
+      <span className="truncate">Download QR Code</span>
+    </SmallButton>
+  </div>
+</div>
+			)}
+		</ResultsContainer>
+		
+
       )}
 			</div>
     </Container>
@@ -327,12 +328,12 @@ const Button: FC<ButtonProps> = ({ ...buttonProps }) => (
 
 const SmallButton: FC<ButtonProps> = ({ className = "", ...buttonProps }) => (
   <button
-    className={`
-			flex items-center gap-1
-      bg-green-light/5 text-green-light/40 text-sm whitespace-nowrap
-      rounded-md px-6 py-2 transition-colors 
-			border border-green-light/5 ${className}
-    `}
+	className={`
+		flex items-center gap-1
+		bg-green-light/5 text-green-light/40 text-[11px]
+		rounded-md px-1 py-2 transition-colors
+		border border-green-light/5 min-w-0 max-w-[160px] ${className}
+	`}	
     {...buttonProps}
   />
 );
@@ -340,6 +341,5 @@ const SmallButton: FC<ButtonProps> = ({ className = "", ...buttonProps }) => (
 
 const ResultsContainer = createDivContainer(`mt-10 w-full max-w-3xl`);
 
-const DownloadButtons = createDivContainer(`flex flex-col gap-2 mt-2`);
 
 
