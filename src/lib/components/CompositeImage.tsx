@@ -72,7 +72,7 @@ const CompositeComp: FC<CompositeProps> = ({
   return (
     <CompositeContainer
       ref={containerRef}
-      style={{ height: containerWidth ?? 0 }}
+      style={{ height: containerWidth ?? 0}}
     >
       {containerWidth != null && (
         <>
@@ -139,7 +139,7 @@ const Slider: FC<SliderProps> = ({ value, onChange }) => {
       value={value}
       onChange={(e) => onChange(Number(e.target.value))}
       className="
-        w-full mt-4 h-[4px] appearance-none rounded-md
+        w-full mt-4 mb-2 h-[4px] appearance-none rounded-md
         [&::-webkit-slider-thumb]:appearance-none
         [&::-webkit-slider-thumb]:h-3
         [&::-webkit-slider-thumb]:w-3
