@@ -298,9 +298,10 @@ const generate = useCallback(async () => {
             : "opacity-80 hover:opacity-100"
         }`}
       >
-        <CompositeImage
-          imgSrc={item.image}
-          qrCodeDataURL={item.qrCode}
+        <img
+          src={item.image}
+          alt={`Thumbnail ${idx + 1}`}
+					className="w-full h-auto rounded-md"
           readonly
         />
       </button>
