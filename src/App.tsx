@@ -18,7 +18,9 @@ import {
   TextareaProps,
 } from "./lib/types";
 import { wait } from "@laxels/utils";
-
+const Container = createDivContainer(
+	"min-h-screen w-full flex flex-col items-center justify-center p-4"
+);
 
 function App() {
   const [prompt, setPrompt] = useState(
@@ -33,88 +35,99 @@ function App() {
   const [qrCodeDataURL, setQRCodeDataURL] = useState<string | null>(null);
   const [imgSrc, setImgSrc] = useState<string | null>(null);
 
-  const generate = useCallback(async () => {
-    if (!prompt) {
-      toast(`Please enter a text prompt`);
-      return;
+	const [mainCompositeIndex, setMainCompositeIndex] = useState(0);
+	const [recentComposites, setRecentComposites] = useState<
+  { qrCode: string; image: string }[]
+>([]);
+
+const generate = useCallback(async () => {
+  if (!prompt) {
+    toast(`Please enter a text prompt`);
+    return;
+  }
+  if (!qrCodeValue) {
+    toast(`Please enter a QR code value`);
+    return;
+  }
+
+  if (
+    qrCodeValue.length > 25 &&
+    !localStorage.getItem("warnedAboutLongQRCode")
+  ) {
+    localStorage.setItem("warnedAboutLongQRCode", "true");
+    toast.warn(
+      `Yo, Q-Art Codes work better with shorter text. Try a URL shortener, leave off http and www. KISS!`
+    );
+  }
+
+  setLoading(true);
+  cancelledRef.current = false;
+
+  const dataURL = await generateQRCodeDataURL(qrCodeValue);
+  if (!dataURL) {
+    console.error("error generating QR code");
+    setLoading(false);
+    return;
+  }
+
+  const handleGenerationFailure = (waitingTime: number) => {
+    const waitColdBoot = 90_000;
+    let message = "Ah geez, something borked. Try again.";
+    if (waitingTime >= waitColdBoot) {
+      message += " It'll probably be faster!";
     }
-    if (!qrCodeValue) {
-      toast(`Please enter a QR code value`);
-      return;
-    }
+    toast(message);
+    setLoading(false);
+  };
 
-    if (
-      qrCodeValue.length > 25 &&
-      !localStorage.getItem("warnedAboutLongQRCode")
-    ) {
-      localStorage.setItem("warnedAboutLongQRCode", "true");
-      toast.warn(
-        `Yo, Q-Art Codes work better with shorter text. Try a URL shortener, leave off http and www. KISS!`
-      );
-    }
+  const results: { qrCode: string; image: string }[] = [];
 
-    setLoading(true);
-    cancelledRef.current = false;
-
-    const dataURL = await generateQRCodeDataURL(qrCodeValue);
-
-    if (!dataURL) {
-      console.error("error generating QR code");
-      setLoading(false);
-      return;
-    }
-
-    const handleGenerationFailure = (waitingTime: number) => {
-      const waitColdBoot = 90_000; // typical waiting time when backend hits a cold boot
-      let message = "Ah geez, something borked. Try again.";
-      if (waitingTime >= waitColdBoot) {
-        message += " It'll probably be faster!";
-      }
-      toast(message);
-      setLoading(false);
-    };
-
+  for (let i = 0; i < 4; i++) {
     const jobID = await startGeneration(prompt, dataURL);
     if (!jobID) {
       handleGenerationFailure(-1);
       return;
     }
-    setJobID(jobID);
 
     const start = Date.now();
     let waitingTime = 0;
-    const maxWaiting = 300_000; // set defensively high, backend should timeout first
-    let waitedTooLong = false;
-    while (!waitedTooLong) {
+    const maxWaiting = 300_000;
+
+    while (true) {
       const pollInterval = 1_000;
       await wait(pollInterval);
-      if (cancelledRef.current) {
-        break;
-      }
+      if (cancelledRef.current) return;
 
       const { status, result } = await pollGeneration(jobID);
       waitingTime = Date.now() - start;
 
-      if (waitingTime >= maxWaiting) {
-        waitedTooLong = true;
-      }
-
       if (status === `FAILED`) {
         handleGenerationFailure(waitingTime);
-        break;
+        return;
       }
 
       if (status === `COMPLETE` && result) {
-        setQRCodeDataURL(dataURL);
-        setImgSrc(result);
+        results.push({ qrCode: dataURL, image: result });
         break;
       }
+
+      if (waitingTime >= maxWaiting) {
+        handleGenerationFailure(waitingTime);
+        return;
+      }
     }
-    if (waitedTooLong) {
-      handleGenerationFailure(waitingTime);
-    }
-    setLoading(false);
-  }, [prompt, qrCodeValue]);
+  }
+
+  // Show the first result as the main one
+  setImgSrc(results[0].image);
+  setQRCodeDataURL(results[0].qrCode);
+
+  // Store all three
+  setRecentComposites(results);
+
+  setLoading(false);
+}, [prompt, qrCodeValue]);
+
 
   const cancel = useCallback(async () => {
     if (!loading || !jobID) {
@@ -246,27 +259,45 @@ function App() {
   </div>
 </UserInput>
       {(loading || (imgSrc && qrCodeDataURL)) && (
-			<ResultsContainer>
-			{loading && <Loader />}
-			{imgSrc && qrCodeDataURL && (
-				<div className="flex flex-row items-start gap-4 w-full overflow-hidden">
-  <div className="flex-[1_1_0] max-w-[60%]">
-    <CompositeImage imgSrc={imgSrc} qrCodeDataURL={qrCodeDataURL} />
-  </div>
+				<ResultsContainer>
+  {loading && <Loader />}
 
-  <div className="flex flex-col gap-2 flex-shrink-0 max-w-[40%] w-full">
-    <SmallButton onClick={downloadQArtCode}>
-      <img src="/download_icon.svg" className="w-4 h-4 opacity-40" />
-      <span className="truncate">Download Q-Art Code</span>
-    </SmallButton>
-    <SmallButton onClick={downloadQRCode}>
-      <img src="/download_icon.svg" className="w-4 h-4 opacity-40" />
-      <span className="truncate">Download QR Code</span>
-    </SmallButton>
-  </div>
-</div>
-			)}
-		</ResultsContainer>
+  {!loading && recentComposites.length > 0 && (
+    <>
+      {/* MAIN IMAGE */}
+      <div className="flex justify-center mt-10">
+        <div className="w-full max-w-md">
+          <CompositeImage
+            imgSrc={recentComposites[mainCompositeIndex].image}
+            qrCodeDataURL={recentComposites[mainCompositeIndex].qrCode}
+          />
+        </div>
+      </div>
+
+      {/* THUMBNAILS */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 w-full">
+        {recentComposites.map((item, idx) => (
+          <button
+            key={idx}
+            onClick={() => setMainCompositeIndex(idx)}
+            className={`transition-transform rounded-md ${
+              idx === mainCompositeIndex
+                ? "scale-105"
+                : "opacity-80 hover:opacity-100"
+            }`}
+          >
+            <CompositeImage
+              imgSrc={item.image}
+              qrCodeDataURL={item.qrCode}
+							readonly
+            />
+          </button>
+        ))}
+      </div>
+    </>
+  )}
+</ResultsContainer>
+
 		
 
       )}
@@ -277,9 +308,6 @@ function App() {
 
 export default App;
 
-const Container = createDivContainer(
-	"min-h-screen w-full flex flex-col items-center justify-center p-4"
-);
 
 const UserInput: FC<FormProps> = ({ children }) => (
   <form onSubmit={(e) => e.preventDefault()}>{children}</form>
