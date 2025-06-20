@@ -264,7 +264,7 @@ const generate = useCallback(async () => {
 
   {!loading && recentComposites.length > 0 && (
 		<>
-<div className="flex flex-col sm:flex-row justify-center items-start gap-6 mt-10">
+<div className="flex flex-row justify-between items-start gap-4 mt-10 w-full overflow-x-auto">
   {/* Main Composite Image */}
   <div className="w-full max-w-md">
     <CompositeImage
@@ -274,7 +274,7 @@ const generate = useCallback(async () => {
   </div>
 
   {/* Download Buttons */}
-  <div className="flex flex-col gap-2 w-full sm:w-auto">
+	<div className="flex flex-col gap-2 shrink-0">
     <SmallButton onClick={downloadQArtCode}>
       <img src="/download_icon.svg" />
       <span>Download Q-Art Code</span>
