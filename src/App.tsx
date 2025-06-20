@@ -369,16 +369,19 @@ const Button: FC<ButtonProps> = ({ ...buttonProps }) => (
 
 const SmallButton: FC<ButtonProps> = ({ className = "", ...buttonProps }) => (
   <button
-	className={`
-		flex items-center gap-1
-		bg-green-light/5 text-green-light/40 text-[11px]
-		rounded-md px-1 py-2 transition-colors
-		border border-green-light/5 min-w-0 max-w-[160px] ${className}
-	`}	
-
+    className={`
+      flex items-center gap-1 sm:gap-2
+      bg-green-light/5 text-green-light/40
+      text-xs sm:text-sm font-inter
+      rounded-md px-3 py-2 sm:px-4 sm:py-2.5
+      transition-colors border border-green-light/5
+      min-w-0 max-w-full sm:max-w-none
+      ${className}
+    `}
     {...buttonProps}
   />
 );
+
 
 
 const ResultsContainer = createDivContainer(`mt-10 w-full max-w-3xl`);
