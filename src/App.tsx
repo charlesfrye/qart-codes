@@ -263,38 +263,51 @@ const generate = useCallback(async () => {
   {loading && <Loader />}
 
   {!loading && recentComposites.length > 0 && (
-    <>
-      {/* MAIN IMAGE */}
-      <div className="flex justify-center mt-10">
-        <div className="w-full max-w-md">
-          <CompositeImage
-            imgSrc={recentComposites[mainCompositeIndex].image}
-            qrCodeDataURL={recentComposites[mainCompositeIndex].qrCode}
-          />
-        </div>
-      </div>
+		<>
+<div className="flex flex-col sm:flex-row justify-center items-start gap-6 mt-10">
+  {/* Main Composite Image */}
+  <div className="w-full max-w-md">
+    <CompositeImage
+      imgSrc={recentComposites[mainCompositeIndex].image}
+      qrCodeDataURL={recentComposites[mainCompositeIndex].qrCode}
+    />
+  </div>
 
-      {/* THUMBNAILS */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 w-full">
-        {recentComposites.map((item, idx) => (
-          <button
-            key={idx}
-            onClick={() => setMainCompositeIndex(idx)}
-            className={`transition-transform rounded-md ${
-              idx === mainCompositeIndex
-                ? "scale-105"
-                : "opacity-80 hover:opacity-100"
-            }`}
-          >
-            <CompositeImage
-              imgSrc={item.image}
-              qrCodeDataURL={item.qrCode}
-							readonly
-            />
-          </button>
-        ))}
-      </div>
-    </>
+  {/* Download Buttons */}
+  <div className="flex flex-col gap-2 w-full sm:w-auto">
+    <SmallButton onClick={downloadQArtCode}>
+      <img src="/download_icon.svg" />
+      <span>Download Q-Art Code</span>
+    </SmallButton>
+    <SmallButton onClick={downloadQRCode}>
+      <img src="/download_icon.svg" />
+      <span>Download QR Code</span>
+    </SmallButton>
+  </div>
+</div>
+
+  {/* THUMBNAILS */}
+  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 w-full">
+    {recentComposites.map((item, idx) => (
+      <button
+        key={idx}
+        onClick={() => setMainCompositeIndex(idx)}
+        className={`transition-transform rounded-md ${
+          idx === mainCompositeIndex
+            ? "scale-105"
+            : "opacity-80 hover:opacity-100"
+        }`}
+      >
+        <CompositeImage
+          imgSrc={item.image}
+          qrCodeDataURL={item.qrCode}
+          readonly
+        />
+      </button>
+    ))}
+  </div>
+</>
+
   )}
 </ResultsContainer>
 
