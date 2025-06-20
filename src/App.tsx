@@ -302,7 +302,6 @@ const generate = useCallback(async () => {
           src={item.image}
           alt={`Thumbnail ${idx + 1}`}
 					className="w-full h-auto rounded-md"
-          readonly
         />
       </button>
     ))}
