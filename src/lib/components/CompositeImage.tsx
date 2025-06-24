@@ -14,11 +14,13 @@ import { downloadStitchedImage } from "../download";
 type CompositeImageProps = {
   imgSrc: string;
   qrCodeDataURL: string;
+	readonly?: boolean;
 };
 
 const CompositeImageComp: FC<CompositeImageProps> = ({
   imgSrc,
   qrCodeDataURL,
+	readonly = false,
 }) => {
   const [sliderValue, setSliderValue] = useState(50);
   return (
@@ -27,8 +29,9 @@ const CompositeImageComp: FC<CompositeImageProps> = ({
         imgSrcLeft={qrCodeDataURL}
         imgSrcRight={imgSrc}
         position={sliderValue}
+				readonly={readonly}
       />
-      <Slider value={sliderValue} onChange={setSliderValue} />
+      {!readonly && <Slider value={sliderValue} onChange={setSliderValue} />}
     </Container>
   );
 };
@@ -39,12 +42,14 @@ type CompositeProps = {
   imgSrcLeft: string;
   imgSrcRight: string;
   position: number;
+	readonly?: boolean;
 };
 
 const CompositeComp: FC<CompositeProps> = ({
   imgSrcLeft,
   imgSrcRight,
   position,
+	readonly = false,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState<number | null>(null);
@@ -90,11 +95,13 @@ const CompositeComp: FC<CompositeProps> = ({
           </ImageContainer>
         </>
       )}
+			{!readonly && 
       <DownloadOverlay onClick={downloadStitched}>
         <IconDownloadContainer>
           <IconDownload />
         </IconDownloadContainer>
       </DownloadOverlay>
+		}
     </CompositeContainer>
   );
 };
