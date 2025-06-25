@@ -1,5 +1,6 @@
 """Text-conditioned generative model of aesthetically pleasing corrupt QR codes."""
-
+import base64
+import io
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -29,6 +30,15 @@ inference_image = (
     )
     .env({"HF_HUB_ENABLE_HF_TRANSFER": "1", "HF_HOME": str(MODELS_PATH)})
 )
+
+with inference_image.imports():
+    import PIL.Image
+    import torch
+    from diffusers import (
+        ControlNetModel,
+        DDIMScheduler,
+        StableDiffusionControlNetPipeline,
+    )
 
 
 @dataclass
@@ -62,13 +72,6 @@ CONFIG = InferenceConfig()
 @modal.concurrent(max_inputs=10)
 class Model:
     def setup(self, with_cuda=False):
-        from diffusers import (
-            ControlNetModel,
-            DDIMScheduler,
-            StableDiffusionControlNetPipeline,
-        )
-        import torch
-
         controlnet = ControlNetModel.from_pretrained(
             "monster-labs/control_v1p_sd15_qrcode_monster",
             torch_dtype=torch.float16,

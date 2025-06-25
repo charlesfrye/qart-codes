@@ -44,8 +44,13 @@ image = (
     .run_function(download_model)
 )
 
+with image.imports():
+    import cv2
+    import numpy as np
+    from qreader import QReader
 
-@app.cls(image=image, allow_concurrent_inputs=10)
+@app.cls(image=image, min_containers=1, gpu="L40S")
+@modal.concurrent(max_inputs=10)
 class Scannability:
     @modal.enter()
     def load(self):

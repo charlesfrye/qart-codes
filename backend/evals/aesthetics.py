@@ -4,7 +4,7 @@ This is a rewrite of the "improved aesthetic predictor" model, which combines CL
 
 For details see https://huggingface.co/camenduru/improved-aesthetic-predictor
 """
-
+import io
 import subprocess
 from urllib.parse import quote
 from pathlib import Path
@@ -62,19 +62,18 @@ image = (
     .run_function(download_models)
 )
 
+with image.imports():
+    import clip
+    import torch
+    from PIL import Image
 
 def normalize(a, axis=-1, order=2):
-    import torch
-
     l2 = torch.norm(a, p=order, dim=axis, keepdim=True)
     l2[l2 == 0] = 1
     return a / l2
 
 
 def load_models():
-    import torch
-    import clip
-
     model = torch.nn.Linear(768, 1)  # embedding dim is 768 for CLIP ViT/L-14
     s = torch.load("/models/sac+logos+ava1-l14-linearMSE.pth", weights_only=True)
     model.load_state_dict(s)
@@ -84,14 +83,12 @@ def load_models():
     model.half()
 
     # and the CLIP encoder
-    clip, preprocessor = clip.load("ViT-L/14", device=device)
-    clip.eval()
-    return model, clip, preprocessor
+    clip_model, preprocessor = clip.load("ViT-L/14", device=device)
+    clip_model.eval()
+    return model, clip_model, preprocessor
 
 
 def predict(aesthetic_model, clip, preprocess, pil_image):
-    import torch
-
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     image = preprocess(pil_image).unsqueeze(0).to(device)
@@ -124,9 +121,6 @@ class Aesthetics:
 
     @modal.method()
     def score(self, image_bytes: bytes) -> float:
-        import io
-        from PIL import Image
-
         pil_image = Image.open(io.BytesIO(image_bytes))
         score = predict(self.aesthetic_model, self.clip, self.preprocessor, pil_image)
         return float(score)
