@@ -55,6 +55,7 @@ class Scannability:
     @modal.enter()
     def load(self):
         self.qreader = QReader()
+        self.qreader.detect_and_decode(np.zeros((768, 768, 3), dtype=np.uint8))
 
     @modal.method()
     def wake(self):
