@@ -1,4 +1,5 @@
 import base64
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -103,12 +104,9 @@ async def generate_and_save(job_id: str, prompt: str, image: str):
         jobs[job_id]["error"] = e
         return
 
-    # now call evaluators -- spawn and then gather (await all)
-    detector_handles = [scannability.check.spawn(img) for img in images_bytes]
-    rating_handles = [aesthetics.score.spawn(img) for img in images_bytes]
-
-    detecteds = modal.functions.gather(*detector_handles)
-    ratings = modal.functions.gather(*rating_handles)
+    # now call evaluators
+    detecteds = [r async for r in scannability.check.map.aio(images_bytes)]
+    ratings = [r async for r in aesthetics.score.map.aio(images_bytes)]
 
     # Construct the payload
     payload = [
