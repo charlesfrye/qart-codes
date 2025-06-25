@@ -54,8 +54,6 @@ with image.imports():
 class Scannability:
     @modal.enter()
     def load(self):
-        from qreader import QReader
-
         self.qreader = QReader()
 
     @modal.method()
@@ -64,9 +62,6 @@ class Scannability:
 
     @modal.method()
     def check(self, image_bytes: bytes) -> tuple[bool, Optional[str]]:
-        import cv2
-        import numpy as np
-
         image_array = np.frombuffer(image_bytes, dtype=np.uint8)
         opencv_image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
         image = cv2.cvtColor(opencv_image, cv2.COLOR_BGR2RGB)
