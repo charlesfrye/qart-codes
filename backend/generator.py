@@ -45,7 +45,7 @@ with inference_image.imports():
 class InferenceConfig:
     """Configuration information for inference."""
 
-    num_inference_steps: int = 100
+    num_inference_steps: int = 50
     controlnet_conditioning_scale: float = 1.5
     control_guidance_start: float = 0.25
     control_guidance_end: float = 1.0
@@ -63,7 +63,7 @@ CONFIG = InferenceConfig()
 
 @app.cls(
     image=inference_image,
-    gpu="h100",
+    gpu="H100!",
     secrets=[modal.Secret.from_name("huggingface")],
     volumes={VOLUME_PATH: volume},
     min_containers=1,
