@@ -19,9 +19,9 @@ def main(
     if target_value:
         assert detected
         print("Detected QR code")
-        assert (
-            decoded_value == target_value
-        ), f"Expected {target_value} but got {decoded_value}"
+        assert decoded_value == target_value, (
+            f"Expected {target_value} but got {decoded_value}"
+        )
         print(f"Decoded QR code to {decoded_value}")
 
 
@@ -48,6 +48,7 @@ with image.imports():
     import cv2
     import numpy as np
     from qreader import QReader
+
 
 @app.cls(image=image, min_containers=1, gpu="L40S")
 @modal.concurrent(max_inputs=10)

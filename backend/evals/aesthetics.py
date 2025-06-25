@@ -4,6 +4,7 @@ This is a rewrite of the "improved aesthetic predictor" model, which combines CL
 
 For details see https://huggingface.co/camenduru/improved-aesthetic-predictor
 """
+
 import io
 import subprocess
 from urllib.parse import quote
@@ -66,6 +67,7 @@ with image.imports():
     import clip
     import torch
     from PIL import Image
+
 
 def normalize(a, axis=-1, order=2):
     l2 = torch.norm(a, p=order, dim=axis, keepdim=True)

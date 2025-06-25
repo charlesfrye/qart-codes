@@ -1,6 +1,9 @@
 """Text-conditioned generative model of aesthetically pleasing corrupt QR codes."""
+
 import base64
+import functools
 import io
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -150,16 +153,9 @@ class Model:
             **kwargs,
         )["images"]
 
-        bytes_images = []
-        for output_image in output_images:
-            # blend the input QR code with the output image to improve scanability
-            output_image = PIL.Image.blend(input_image, output_image, 0.95)
-
-            buffer = io.BytesIO()
-            output_image.save(buffer, format="PNG")
-            buffer.seek(0)
-            png_bytes = buffer.getvalue()
-            bytes_images.append(png_bytes)
+        process_func = functools.partial(postprocess_image, input_image=input_image)
+        with ThreadPoolExecutor(max_workers=min(len(output_images), 8)) as executor:
+            bytes_images = list(executor.map(process_func, output_images))
 
         return bytes_images
 
@@ -179,7 +175,18 @@ def main(text: str = None):
     for ii, image_bytes in enumerate(images_bytes):
         out_path = out_dir / f"{slugify(text)}-{str(ii).zfill(2)}.png"
         out_path.write_bytes(image_bytes)
-        print("saved output to", out_path)
+        print(f"saved output to {out_path}")
+
+
+def postprocess_image(output_image, input_image):
+    # blend the input QR code with the output image to improve scanability
+    blended_image = PIL.Image.blend(input_image, output_image, 0.95)
+
+    buffer = io.BytesIO()
+    blended_image.save(buffer, format="PNG", optimize=False, compress_level=1)
+    # blended_image.save(buffer, format="JPEG", quality=95, optimize=False)
+    buffer.seek(0)
+    return buffer.getvalue()
 
 
 def slugify(string):
