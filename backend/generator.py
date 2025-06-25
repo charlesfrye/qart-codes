@@ -14,18 +14,18 @@ MODELS_PATH = VOLUME_PATH / "models"
 here = Path(__file__).parent
 
 inference_image = (
-    modal.Image.debian_slim(python_version="3.10")
+    modal.Image.debian_slim(python_version="3.12")
     .apt_install("ffmpeg", "libsm6", "libxext6")
     .pip_install(
-        "accelerate~=1.2.1",
-        "datasets~=2.13.1",
-        "diffusers==0.31.0",
-        "Pillow~=10.0.0",
-        "torch==2.5.1",
-        "transformers==4.47.1",
-        "triton==3.1.0",
-        "huggingface-hub==0.27.0",
-        "hf-transfer==0.1.8",
+        "accelerate~=1.8.1",
+        "datasets~=3.6.0",
+        "diffusers==0.33.1",
+        "Pillow~=11.2.1",
+        "torch==2.7.1",
+        "transformers==4.52.4",
+        "triton==3.3.1",
+        "huggingface-hub==0.33.0",
+        "hf-transfer==0.1.9",
     )
     .env({"HF_HUB_ENABLE_HF_TRANSFER": "1", "HF_HOME": str(MODELS_PATH)})
 )
@@ -56,10 +56,10 @@ CONFIG = InferenceConfig()
     gpu="h100",
     secrets=[modal.Secret.from_name("huggingface")],
     volumes={VOLUME_PATH: volume},
-    keep_warm=1,
-    container_idle_timeout=1200,
-    allow_concurrent_inputs=10,
+    min_containers=1,
+    scaledown_window=1200,
 )
+@modal.concurrent(max_inputs=10)
 class Model:
     def setup(self, with_cuda=False):
         from diffusers import (

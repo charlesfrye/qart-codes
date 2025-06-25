@@ -36,7 +36,7 @@ image = (
     .apt_install("python3-opencv", "libzbar0")
     .pip_install(
         "opencv-python==4.11.0.86",
-        "pillow==11.1.0",
+        "pillow==11.2.1",
         "pyzbar==0.1.9",
         "qrdet==2.5",
         "qreader==3.14",
@@ -47,9 +47,6 @@ image = (
 
 @app.cls(image=image, allow_concurrent_inputs=10)
 class Scannability:
-    def __init__(self):
-        pass
-
     @modal.enter()
     def load(self):
         from qreader import QReader

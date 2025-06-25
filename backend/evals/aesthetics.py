@@ -53,10 +53,10 @@ image = (
     modal.Image.debian_slim(python_version="3.12")
     .apt_install("git", "wget")
     .pip_install(
-        "qrcode==8.0",
-        "Pillow==11.1.0",
-        "transformers==4.48.1",
-        "torch==2.5.1",
+        "qrcode==8.2",
+        "Pillow==11.2.1",
+        "transformers==4.52.4",
+        "torch==2.7.1",
         "git+https://github.com/openai/CLIP.git",
     )
     .run_function(download_models)
@@ -108,12 +108,10 @@ def predict(aesthetic_model, clip, preprocess, pil_image):
 
 
 # Now we wrap inference in a modal class for hosting
-@app.cls(image=image, gpu="any", allow_concurrent_inputs=10, keep_warm=1)
+@app.cls(image=image, gpu="L40S", min_containers=1)
+@modal.concurrent(max_inputs=10)
 class Aesthetics:
     """Predict a human aesthetic ranking based on CLIP embeddings and a linear model."""
-
-    def __init__(self):
-        pass
 
     @modal.enter()
     def load(self):

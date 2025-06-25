@@ -9,9 +9,8 @@ from .common import ASSETS_DIR, RESULTS_DIR, results_volume
 from .datamodel import JobStatus, JobRequest
 
 
-jobs = modal.Dict.from_name(
-    "qart-codes-jobs", {"_test": {"status": JobStatus.COMPLETE}}, create_if_missing=True
-)
+jobs = modal.Dict.from_name("qart-codes-jobs", create_if_missing=True)
+# jobs.put("_test", {"status": JobStatus.COMPLETE})
 
 Model = modal.Cls.from_name("qart-inference", "Model")
 Aesthetics = modal.Cls.from_name("qart-eval", "Aesthetics")
@@ -83,7 +82,7 @@ async def read(job_id: str) -> bytes:
     return payload
 
 
-@app.function(timeout=150, volumes={RESULTS_DIR: results_volume}, keep_warm=1)
+@app.function(timeout=150, volumes={RESULTS_DIR: results_volume}, min_containers=1)
 async def generate_and_save(job_id: str, prompt: str, image: str):
     """Generate a QR code from a prompt and push it into the jobs dict."""
     try:
