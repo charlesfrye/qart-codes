@@ -23,13 +23,13 @@ help: banner ## get a list of all the targets, plus short descriptions
 
 api: backend modal-auth ## deploy the generator and API on Modal
 	$(if $(filter prod, $(value ENV)),\
-		modal deploy api, \
-	modal serve api \
+		modal deploy -m api, \
+	modal serve -m api \
 	)
 
 backend: modal-auth  # deploy the generator and evals on Modal
-	modal deploy generator
-	modal deploy evals
+	modal deploy -m generator
+	modal deploy -m evals
 
 
 alltests: tests e2etests  ## run component-wise and e2e tests
@@ -37,17 +37,17 @@ alltests: tests e2etests  ## run component-wise and e2e tests
 e2etests: modal-auth dev-environment  ## run e2e tests
 	@{ \
 		trap 'kill $$SERVER_PID' EXIT; \
-		modal serve api & \
+		modal serve -m api & \
 		SERVER_PID=$$!; \
 		sleep 5; \
 		pytest -rP; \
 	}
 
 tests: modal-auth dev-environment ## run the component-wise tests
-	modal run generator
+	modal run -m generator
 	modal run evals/aesthetics.py
 	modal run evals/scannability.py
-	modal run api.jobs
+	modal run -m api.jobs
 
 modal-auth: environment ## authenticates to Modal
 	@$(if $(value MODAL_TOKEN_ID),, \
