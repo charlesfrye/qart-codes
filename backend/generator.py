@@ -123,11 +123,6 @@ class Model:
         control_guidance_end=CONFIG.control_guidance_end,
         **kwargs,
     ):
-        import base64
-        import io
-
-        import PIL.Image
-
         print(input_image[:10])
         print(input_image[-10:])
 
