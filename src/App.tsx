@@ -305,7 +305,7 @@ const generate = useCallback(async () => {
         className={`transition-transform rounded-md ${
           idx === mainCompositeIndex
             ? "scale-105"
-            : "opacity-80 hover:opacity-100"
+            : "opacity-40 hover:opacity-100"
         }`}
       >
         <img
