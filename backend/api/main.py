@@ -6,7 +6,8 @@ from .common import app
 from .common import toml_file_path
 
 
-@app.function(keep_warm=1, container_idle_timeout=60, allow_concurrent_inputs=1000)
+@app.function(min_containers=1, scaledown_window=60)
+@modal.concurrent(max_inputs=1000)
 @modal.asgi_app()
 def api():
     with open(toml_file_path, "r") as toml_file:

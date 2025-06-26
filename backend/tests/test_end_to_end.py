@@ -47,8 +47,8 @@ def test_end_to_end():
         status = result.json()["status"]
 
     job_status_complete = time.monotonic_ns()
-    print("job marked complete in", (job_status_complete - job_posted) / 1e9, "seconds")
     assert status == "COMPLETE", result
+    print("job marked complete in", (job_status_complete - job_posted) / 1e9, "seconds")
 
     result = requests.get(job_route + f"/{job_id}")
     result_received = time.monotonic_ns()

@@ -1,4 +1,5 @@
 import base64
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -9,9 +10,8 @@ from .common import ASSETS_DIR, RESULTS_DIR, results_volume
 from .datamodel import JobStatus, JobRequest
 
 
-jobs = modal.Dict.from_name(
-    "qart-codes-jobs", {"_test": {"status": JobStatus.COMPLETE}}, create_if_missing=True
-)
+jobs = modal.Dict.from_name("qart-codes-jobs", create_if_missing=True)
+# jobs.put("_test", {"status": JobStatus.COMPLETE})
 
 Model = modal.Cls.from_name("qart-inference", "Model")
 Aesthetics = modal.Cls.from_name("qart-eval", "Aesthetics")
@@ -83,7 +83,7 @@ async def read(job_id: str) -> bytes:
     return payload
 
 
-@app.function(timeout=150, volumes={RESULTS_DIR: results_volume}, keep_warm=1)
+@app.function(timeout=150, volumes={RESULTS_DIR: results_volume}, min_containers=1)
 async def generate_and_save(job_id: str, prompt: str, image: str):
     """Generate a QR code from a prompt and push it into the jobs dict."""
     try:
@@ -104,12 +104,9 @@ async def generate_and_save(job_id: str, prompt: str, image: str):
         jobs[job_id]["error"] = e
         return
 
-    # now call evaluators -- spawn and then gather (await all)
-    detector_handles = [scannability.check.spawn(img) for img in images_bytes]
-    rating_handles = [aesthetics.score.spawn(img) for img in images_bytes]
-
-    detecteds = modal.functions.gather(*detector_handles)
-    ratings = modal.functions.gather(*rating_handles)
+    # now call evaluators
+    detecteds = [r async for r in scannability.check.map.aio(images_bytes)]
+    ratings = [r async for r in aesthetics.score.map.aio(images_bytes)]
 
     # Construct the payload
     payload = [

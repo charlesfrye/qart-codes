@@ -5,6 +5,7 @@ This is a rewrite of the "improved aesthetic predictor" model, which combines CL
 For details see https://huggingface.co/camenduru/improved-aesthetic-predictor
 """
 
+import io
 import subprocess
 from urllib.parse import quote
 from pathlib import Path
@@ -53,28 +54,28 @@ image = (
     modal.Image.debian_slim(python_version="3.12")
     .apt_install("git", "wget")
     .pip_install(
-        "qrcode==8.0",
-        "Pillow==11.1.0",
-        "transformers==4.48.1",
-        "torch==2.5.1",
+        "qrcode==8.2",
+        "Pillow==11.2.1",
+        "transformers==4.52.4",
+        "torch==2.7.1",
         "git+https://github.com/openai/CLIP.git",
     )
     .run_function(download_models)
 )
 
+with image.imports():
+    import clip
+    import torch
+    from PIL import Image
+
 
 def normalize(a, axis=-1, order=2):
-    import torch
-
     l2 = torch.norm(a, p=order, dim=axis, keepdim=True)
     l2[l2 == 0] = 1
     return a / l2
 
 
 def load_models():
-    import torch
-    import clip
-
     model = torch.nn.Linear(768, 1)  # embedding dim is 768 for CLIP ViT/L-14
     s = torch.load("/models/sac+logos+ava1-l14-linearMSE.pth", weights_only=True)
     model.load_state_dict(s)
@@ -84,14 +85,12 @@ def load_models():
     model.half()
 
     # and the CLIP encoder
-    clip, preprocessor = clip.load("ViT-L/14", device=device)
-    clip.eval()
-    return model, clip, preprocessor
+    clip_model, preprocessor = clip.load("ViT-L/14", device=device)
+    clip_model.eval()
+    return model, clip_model, preprocessor
 
 
 def predict(aesthetic_model, clip, preprocess, pil_image):
-    import torch
-
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     image = preprocess(pil_image).unsqueeze(0).to(device)
@@ -108,12 +107,10 @@ def predict(aesthetic_model, clip, preprocess, pil_image):
 
 
 # Now we wrap inference in a modal class for hosting
-@app.cls(image=image, gpu="any", allow_concurrent_inputs=10, keep_warm=1)
+@app.cls(image=image, gpu="L40S", min_containers=1)
+@modal.concurrent(max_inputs=10)
 class Aesthetics:
     """Predict a human aesthetic ranking based on CLIP embeddings and a linear model."""
-
-    def __init__(self):
-        pass
 
     @modal.enter()
     def load(self):
@@ -126,9 +123,6 @@ class Aesthetics:
 
     @modal.method()
     def score(self, image_bytes: bytes) -> float:
-        import io
-        from PIL import Image
-
         pil_image = Image.open(io.BytesIO(image_bytes))
         score = predict(self.aesthetic_model, self.clip, self.preprocessor, pil_image)
         return float(score)

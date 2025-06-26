@@ -15,12 +15,12 @@ toml_file_path = here.parent / "pyproject.toml"
 results_volume = modal.Volume.from_name("qart-results-vol", create_if_missing=True)
 
 image = (
-    modal.Image.debian_slim(python_version="3.10")
+    modal.Image.debian_slim(python_version="3.12")
     .pip_install(
-        "fastapi[standard]==0.115.5",
+        "fastapi[standard]==0.115.13",
         "pydantic>=2,<3",
-        "wonderwords",
-        "Pillow",
+        "wonderwords==2.2.0",
+        "Pillow==11.2.1",
         "aiofiles==24.1.0",
         "toml==0.10.2",
     )

@@ -19,9 +19,9 @@ def main(
     if target_value:
         assert detected
         print("Detected QR code")
-        assert (
-            decoded_value == target_value
-        ), f"Expected {target_value} but got {decoded_value}"
+        assert decoded_value == target_value, (
+            f"Expected {target_value} but got {decoded_value}"
+        )
         print(f"Decoded QR code to {decoded_value}")
 
 
@@ -36,7 +36,7 @@ image = (
     .apt_install("python3-opencv", "libzbar0")
     .pip_install(
         "opencv-python==4.11.0.86",
-        "pillow==11.1.0",
+        "pillow==11.2.1",
         "pyzbar==0.1.9",
         "qrdet==2.5",
         "qreader==3.14",
@@ -44,17 +44,19 @@ image = (
     .run_function(download_model)
 )
 
+with image.imports():
+    import cv2
+    import numpy as np
+    from qreader import QReader
 
-@app.cls(image=image, allow_concurrent_inputs=10)
+
+@app.cls(image=image, min_containers=1, gpu="L40S")
+@modal.concurrent(max_inputs=10)
 class Scannability:
-    def __init__(self):
-        pass
-
     @modal.enter()
     def load(self):
-        from qreader import QReader
-
         self.qreader = QReader()
+        self.qreader.detect_and_decode(np.zeros((768, 768, 3), dtype=np.uint8))
 
     @modal.method()
     def wake(self):
@@ -62,9 +64,6 @@ class Scannability:
 
     @modal.method()
     def check(self, image_bytes: bytes) -> tuple[bool, Optional[str]]:
-        import cv2
-        import numpy as np
-
         image_array = np.frombuffer(image_bytes, dtype=np.uint8)
         opencv_image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
         image = cv2.cvtColor(opencv_image, cv2.COLOR_BGR2RGB)
