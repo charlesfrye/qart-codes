@@ -31,17 +31,22 @@ inference_image = (
         "huggingface-hub==0.33.0",
         "hf-transfer==0.1.9",
     )
-    .env({"HF_HUB_ENABLE_HF_TRANSFER": "1", "HF_HOME": str(MODELS_PATH)})
+    .env(
+        {
+            "HF_HUB_ENABLE_HF_TRANSFER": "1",
+            "HF_HUB_CACHE": str(MODELS_PATH),
+        }
+    )
 )
 
 with inference_image.imports():
-    import PIL.Image
     import torch
     from diffusers import (
         ControlNetModel,
         DDIMScheduler,
         StableDiffusionControlNetPipeline,
     )
+    from PIL import Image
 
 
 @dataclass
@@ -77,7 +82,7 @@ class Model:
     def setup(self, with_cuda=False):
         controlnet = ControlNetModel.from_pretrained(
             "monster-labs/control_v1p_sd15_qrcode_monster",
-            torch_dtype=torch.float16,
+            torch_dtype=torch.bfloat16,
             use_safetensors=True,
             subfolder="v2",
         )
@@ -85,24 +90,34 @@ class Model:
         controller = StableDiffusionControlNetPipeline.from_pretrained(
             "Lykon/DreamShaper",
             controlnet=controlnet,
-            torch_dtype=torch.float16,
+            torch_dtype=torch.bfloat16,
             use_safetensors=False,
             safety_checker=None,
         )
 
         controller.scheduler = DDIMScheduler.from_config(controller.scheduler.config)
 
-        if with_cuda:
-            controller = controller.to("cuda") if with_cuda else controller
+        # small optimizations
+        controller.fuse_qkv_projections()
+        controller.unet.to(memory_format=torch.channels_last)
+        controller.vae.to(memory_format=torch.channels_last)
+
+        controller = controller.to("cuda") if with_cuda else controller
+
+        # the first cut is the deepest
+        controller(
+            "dummy prompt",
+            image=Image.new("RGB", (CONFIG.width, CONFIG.height)),
+            height=CONFIG.height,
+            width=CONFIG.width,
+            num_images_per_prompt=CONFIG.num_images_per_prompt,
+            num_inference_steps=1,
+        )
 
         return controller
 
     @modal.enter()
     def start(self):
-        from accelerate.utils import write_basic_config
-
-        write_basic_config(mixed_precision="fp16")
-
         controller = self.setup(with_cuda=True)
 
         self.pipe = controller
@@ -130,9 +145,8 @@ class Model:
             input_image = input_image.split("base64,")[1]
 
         input_image = base64.b64decode(input_image)
-        input_image = PIL.Image.open(io.BytesIO(input_image)).convert("RGB")
-        input_image = input_image.resize((width, height), resample=PIL.Image.LANCZOS)
-
+        input_image = Image.open(io.BytesIO(input_image)).convert("RGB")
+        input_image = input_image.resize((width, height), resample=Image.LANCZOS)
         output_images = self.pipe(
             text,
             negative_prompt=negative_prompt,
@@ -175,7 +189,7 @@ def main(text: str = None):
 
 def postprocess_image(output_image, input_image):
     # blend the input QR code with the output image to improve scanability
-    blended_image = PIL.Image.blend(input_image, output_image, 0.95)
+    blended_image = Image.blend(input_image, output_image, 0.95)
 
     buffer = io.BytesIO()
     blended_image.save(buffer, format="PNG", optimize=False, compress_level=1)
