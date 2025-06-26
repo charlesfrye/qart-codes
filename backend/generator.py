@@ -30,6 +30,7 @@ inference_image = (
         "triton==3.3.1",
         "huggingface-hub==0.33.0",
         "hf-transfer==0.1.9",
+        extra_index_url="https://download.pytorch.org/whl/cu128",
     )
     .env(
         {
@@ -71,7 +72,7 @@ CONFIG = InferenceConfig()
 
 @app.cls(
     image=inference_image,
-    gpu="H100!",
+    gpu=["B200", "H100!", "H200"],
     secrets=[modal.Secret.from_name("huggingface")],
     volumes={VOLUME_PATH: volume},
     min_containers=1,
