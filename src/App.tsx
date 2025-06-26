@@ -171,7 +171,7 @@ const generate = useCallback(async () => {
       <img
         src="/Modal-Logo-Light.svg"
         alt="Modal Logo"
-        className="h-2 w-auto sm:h-4"
+        className="h-4 w:auto"
       />
     </div>
     <a
@@ -229,7 +229,7 @@ const generate = useCallback(async () => {
     <div className="flex flex-col gap-2">
       <label
         htmlFor="prompt"
-        className="text-3xl font-degular font-light text-green-light"
+        className="text-3xl font-degular font-light text-green-light sm:text-xl"
       >
         Prompt
       </label>
