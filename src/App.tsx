@@ -169,11 +169,10 @@ const generate = useCallback(async () => {
     <div className="flex items-center gap-1 sm:gap-2 text-green-light font-degular whitespace-nowrap overflow-hidden">
       <span className="truncate">Built with</span>
       <img
-        src="/modal.svg"
+        src="/Modal-Logo-Light.svg"
         alt="Modal Logo"
-        className="h-4 w-auto sm:h-6"
+        className="h-2 w-auto sm:h-4"
       />
-      <span className="truncate">Modal</span>
     </div>
     <a
       href="https://modal.com/playground"
@@ -220,7 +219,7 @@ const generate = useCallback(async () => {
   <img
     src="/GitHubIcon.svg"
     alt="GitHub Icon"
-    className="w-4 h-4 shrink-0"
+    className="w-4 h-4 shrink-0 hidden sm:block"
   />
   <span className="relative top-[0.5px]">View Code</span>
 </a>
