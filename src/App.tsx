@@ -153,14 +153,15 @@ const generate = useCallback(async () => {
   }, [qrCodeDataURL]);
 
   const downloadQArtCode = useCallback(async () => {
-    if (!imgSrc) {
+    const dataUrl = recentComposites[mainCompositeIndex].image;
+    if (!dataUrl) {
       return;
     }
     await downloadImage({
-      url: imgSrc,
-      fileName: `image`,
+      url: dataUrl,
+      fileName: `qart-code`,
     });
-  }, [imgSrc]);
+  }, [mainCompositeIndex, recentComposites]);
 
   return (
     <Container>
