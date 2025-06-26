@@ -80,50 +80,53 @@ const generate = useCallback(async () => {
     setLoading(false);
   };
 
-  const results: { qrCode: string; image: string }[] = [];
+  const jobID = await startGeneration(prompt, dataURL);
+  if (!jobID) {
+    handleGenerationFailure(-1);
+    return;
+  }
 
-  for (let i = 0; i < 4; i++) {
-    const jobID = await startGeneration(prompt, dataURL);
-    if (!jobID) {
-      handleGenerationFailure(-1);
+  const start = Date.now();
+  let waitingTime = 0;
+  const maxWaiting = 300_000;
+
+  let results : string[] | undefined;
+  while (true) {
+    const pollInterval = 1_000;
+    await wait(pollInterval);
+    if (cancelledRef.current) return;
+
+    const { status, results: maybeResults } = await pollGeneration(jobID);
+    waitingTime = Date.now() - start;
+
+    if (status === `FAILED`) {
+      handleGenerationFailure(waitingTime);
       return;
     }
 
-    const start = Date.now();
-    let waitingTime = 0;
-    const maxWaiting = 300_000;
+    if (status === `COMPLETE`) {
+      results = maybeResults;
+      break;
+    }
 
-    while (true) {
-      const pollInterval = 1_000;
-      await wait(pollInterval);
-      if (cancelledRef.current) return;
-
-      const { status, result } = await pollGeneration(jobID);
-      waitingTime = Date.now() - start;
-
-      if (status === `FAILED`) {
-        handleGenerationFailure(waitingTime);
-        return;
-      }
-
-      if (status === `COMPLETE` && result) {
-        results.push({ qrCode: dataURL, image: result });
-        break;
-      }
-
-      if (waitingTime >= maxWaiting) {
-        handleGenerationFailure(waitingTime);
-        return;
-      }
+    if (waitingTime >= maxWaiting) {
+      handleGenerationFailure(waitingTime);
+      return;
     }
   }
 
-  // Show the first result as the main one
-  setImgSrc(results[0].image);
-  setQRCodeDataURL(results[0].qrCode);
+  if (!results || results.length < 4) {
+    handleGenerationFailure(waitingTime);
+    return;
+  }
 
-  // Store all three
-  setRecentComposites(results);
+  setImgSrc(results[0]);
+  setQRCodeDataURL(dataURL);
+
+  setRecentComposites(results.slice(0, 4).map<{ image: string; qrCode: string }>(img => ({
+    image: img,
+    qrCode: dataURL,
+  })));
 
   setLoading(false);
 }, [prompt, qrCodeValue]);
@@ -223,7 +226,7 @@ const generate = useCallback(async () => {
 </a>
 				</div>
 				<UserInput>
-  <div> 
+  <div>
     <div className="flex flex-col gap-2">
       <label
         htmlFor="prompt"
@@ -265,7 +268,6 @@ const generate = useCallback(async () => {
   {!loading && recentComposites.length > 0 && (
 		<>
 <div className="flex flex-row justify-between items-start gap-4 mt-10 w-full overflow-x-auto">
-  {/* Main Composite Image */}
   <div className="w-full max-w-md">
     <CompositeImage
       imgSrc={recentComposites[mainCompositeIndex].image}
@@ -273,7 +275,6 @@ const generate = useCallback(async () => {
     />
   </div>
 
-  {/* Download Buttons */}
 	<div className="flex flex-col gap-2 shrink-0">
     <SmallButton onClick={downloadQArtCode}>
       <img src="/download_icon.svg" />
@@ -286,7 +287,6 @@ const generate = useCallback(async () => {
   </div>
 </div>
 
-  {/* THUMBNAILS */}
   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 w-full">
     {recentComposites.map((item, idx) => (
       <button
@@ -311,7 +311,7 @@ const generate = useCallback(async () => {
   )}
 </ResultsContainer>
 
-		
+
 
       )}
 			</div>
@@ -329,8 +329,8 @@ const UserInput: FC<FormProps> = ({ children }) => (
 const Input: FC<InputProps> = ({ ...inputProps }) => (
   <input
     className="w-full rounded-xl py-2.5 px-8 first:mt-0
-               bg-green-light/10       
-               text-green-light font-degular 
+               bg-green-light/10
+               text-green-light font-degular
                placeholder:text-green-light/60
                focus-visible:outline-none"
     {...inputProps}
@@ -351,7 +351,7 @@ const Textarea: FC<TextareaProps> = ({ ...inputProps }) => {
     <textarea
       ref={textAreaRef}
       className="w-full rounded-xl py-2.5 px-8 first:mt-0
-                 bg-green-light/10      
+                 bg-green-light/10
                  text-green-light font-degular font-light leading-relaxed
                  placeholder:text-green-light/60
                  focus:outline-none resize-none overflow-hidden max-h-60"
@@ -385,4 +385,3 @@ const SmallButton: FC<ButtonProps> = ({ className = "", ...buttonProps }) => (
 
 
 const ResultsContainer = createDivContainer(`mt-10 w-full max-w-3xl`);
-

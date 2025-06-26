@@ -55,7 +55,7 @@ export async function startGeneration(
 
 type PollResult = {
   status: JobStatus;
-  result?: string;
+  results?: string[];
 };
 
 interface JsonResponseEntry {
@@ -80,34 +80,31 @@ export async function pollGeneration(jobID: string): Promise<PollResult> {
   if (status === `COMPLETE`) {
     // Get job result
     const resultResponse = await fetch(`${BACKEND_URL}/job/${jobID}`);
-    const jsonResponse: JsonResponseEntry[] = await resultResponse.json();
+    const payload: JsonResponseEntry[] = await resultResponse.json();
 
-    if (jsonResponse?.length > 0) {
-      // Filter for detected codes
-      const detectedGenerations =
-        jsonResponse.some((gen) => gen.evaluation?.detected)
-          ? jsonResponse.filter((gen) => gen.evaluation?.detected)
-          : jsonResponse;
+    if (!Array.isArray(payload) || payload.length === 0) {
+      throw new Error("Invalid API response: payload is missing or empty");
+    }
 
-      // Find the entry with the highest 'aesthetic_rating'
-      const bestGen = detectedGenerations.reduce(
-        (prev, current) =>
-          (current.evaluation?.aesthetic_rating ?? 0) >
-          (prev.evaluation?.aesthetic_rating ?? 0)
-            ? current
-            : prev,
-        jsonResponse[0]
-      );
+    // return in the order best for display:
+    const orderedResults = [...payload].sort((a, b) => {
+      const detA = !!a.evaluation?.detected;
+      const detB = !!b.evaluation?.detected;
+      if (detA !== detB) return detA ? -1 : 1;            // scannable before not
 
-      const base64Image = bestGen.image;
+      const rA = a.evaluation?.aesthetic_rating ?? -Infinity;
+      const rB = b.evaluation?.aesthetic_rating ?? -Infinity;
+      return rB - rA;                                     // higher ratings first
+    });
+
+
       return {
         status,
-        result: `data:image/png;base64,${base64Image}`,
+        results: orderedResults.map(({ image }) => `data:image/png;base64,${image}`)
       };
-    } else throw new Error("Invalid API response: payload is missing or empty");
-  }
+    }
 
-  return { status };
+  return { status }
 }
 
 export async function cancelGeneration(jobID: string): Promise<void> {
