@@ -214,7 +214,17 @@ const generate = useCallback(async () => {
   href="https://github.com/charlesfrye/qart-codes"
   target="_blank"
   rel="noopener noreferrer"
-  className="inline-flex items-center justify-center gap-2 text-green-light font-degular border border-green-light rounded-full px-3 py-1.5 leading-none whitespace-nowrap max-w-full text-sm sm:text-base"
+  className="
+    inline-flex items-center justify-center
+    gap-2 sm:gap-1
+    text-green-light font-degular
+    border border-green-light rounded-full
+    px-1.5 sm:px-3
+    py-0.5 sm:py-1.5
+    leading-none whitespace-nowrap max-w-full
+    text-sm sm:text-base
+    ml-2 sm:ml-4
+  "
 >
   <img
     src="/GitHubIcon.svg"
