@@ -26,7 +26,7 @@ function App() {
   const [prompt, setPrompt] = useState(
     `neon green cubes, rendered in blender, trending on artstation, deep colors, cyberpunk aesthetic, striking contrast, hyperrealistic`
   );
-  const [qrCodeValue, setQRCodeValue] = useState(`modal.com`);
+  const [qrCodeValue, setQRCodeValue] = useState(`https://qart.codes`);
 
   const [loading, setLoading] = useState(false);
   const [jobID, setJobID] = useState<string | null>(null);
