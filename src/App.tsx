@@ -235,13 +235,13 @@ const generate = useCallback(async () => {
   />
   <span className="relative top-[0.5px]">View Code</span>
 </a>
-				</div>
-				<UserInput>
+</div>
+<UserInput>
   <div>
     <div className="flex flex-col gap-2">
       <label
         htmlFor="prompt"
-        className="text-3xl font-degular font-light text-green-light sm:text-xl"
+        className="text-3xl font-degular font-light text-green-light"
       >
         Prompt
       </label>
