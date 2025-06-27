@@ -80,11 +80,12 @@ const generate = useCallback(async () => {
     setLoading(false);
   };
 
-  const jobID = await startGeneration(prompt, dataURL);
-  if (!jobID) {
+  const localJobID = await startGeneration(prompt, dataURL);
+  if (!localJobID) {
     handleGenerationFailure(-1);
     return;
   }
+  setJobID(localJobID);
 
   const start = Date.now();
   let waitingTime = 0;
@@ -96,7 +97,7 @@ const generate = useCallback(async () => {
     await wait(pollInterval);
     if (cancelledRef.current) return;
 
-    const { status, results: maybeResults } = await pollGeneration(jobID);
+    const { status, results: maybeResults } = await pollGeneration(localJobID);
     waitingTime = Date.now() - start;
 
     if (status === `FAILED`) {
@@ -266,7 +267,7 @@ const generate = useCallback(async () => {
       />
     </div>
 
-    <Button disabled={loading} onClick={loading ? cancel : generate}>
+    <Button onClick={loading ? cancel : generate}>
       {loading ? "Cancel Generation" : "Generate Q-Art Code"}
     </Button>
   </div>
