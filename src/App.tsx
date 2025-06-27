@@ -358,15 +358,16 @@ const Textarea: FC<TextareaProps> = ({ ...inputProps }) => {
   }, [inputProps.value]);
 
   return (
-    <textarea
-      ref={textAreaRef}
-      className="w-full rounded-xl py-2.5 px-8 first:mt-0
-                 bg-green-light/10
-                 text-green-light font-degular font-light leading-relaxed
-                 placeholder:text-green-light/60
-                 focus:outline-none resize-none overflow-hidden max-h-60"
-      {...inputProps}
-    />
+<textarea
+  ref={textAreaRef}
+  className="w-full rounded-xl py-2.5 px-8 first:mt-0
+             bg-green-light/10
+             text-sm sm:text-base md:text-lg
+             text-green-light font-degular font-light leading-relaxed
+             placeholder:text-green-light/60
+             focus:outline-none resize-none overflow-hidden max-h-60"
+  {...inputProps}
+/>
   );
 };
 
