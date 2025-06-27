@@ -278,15 +278,14 @@ const generate = useCallback(async () => {
 
   {!loading && recentComposites.length > 0 && (
 		<>
-<div className="flex flex-row justify-between items-start gap-4 mt-10 w-full overflow-x-auto">
-  <div className="w-full max-w-md">
+<div className="flex flex-col sm:flex-row justify-between items-start gap-4 mt-10 w-full">
+  <div className="w-full max-w-md mx-auto sm:mx-0">
     <CompositeImage
       imgSrc={recentComposites[mainCompositeIndex].image}
       qrCodeDataURL={recentComposites[mainCompositeIndex].qrCode}
     />
   </div>
-
-	<div className="flex flex-col gap-2 shrink-0">
+  <div className="flex flex-row sm:flex-col gap-2 justify-center sm:justify-start w-full sm:w-auto mt-4 sm:mt-0">
     <SmallButton onClick={downloadQArtCode}>
       <img src="/download_icon.svg" />
       <span>Download Q-Art Code</span>
@@ -296,27 +295,27 @@ const generate = useCallback(async () => {
       <span>Download QR Code</span>
     </SmallButton>
   </div>
-</div>
 
-  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 w-full">
-    {recentComposites.map((item, idx) => (
-      <button
-        key={idx}
-        onClick={() => setMainCompositeIndex(idx)}
-        className={`transition-transform rounded-md ${
-          idx === mainCompositeIndex
-            ? "scale-105"
-            : "opacity-40 hover:opacity-100"
-        }`}
-      >
-        <img
-          src={item.image}
-          alt={`Thumbnail ${idx + 1}`}
-					className="w-full h-auto rounded-md"
-        />
-      </button>
-    ))}
-  </div>
+</div>
+<div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 w-full">
+  {recentComposites.map((item, idx) => (
+    <button
+      key={idx}
+      onClick={() => setMainCompositeIndex(idx)}
+      className={`transition-transform rounded-md ${
+        idx === mainCompositeIndex
+          ? "scale-105"
+          : "opacity-40 hover:opacity-100"
+      }`}
+    >
+      <img
+        src={item.image}
+        alt={`Thumbnail ${idx + 1}`}
+        className="w-full h-auto rounded-md"
+      />
+    </button>
+  ))}
+</div>
 </>
 
   )}
@@ -359,15 +358,16 @@ const Textarea: FC<TextareaProps> = ({ ...inputProps }) => {
   }, [inputProps.value]);
 
   return (
-    <textarea
-      ref={textAreaRef}
-      className="w-full rounded-xl py-2.5 px-8 first:mt-0
-                 bg-green-light/10
-                 text-green-light font-degular font-light leading-relaxed
-                 placeholder:text-green-light/60
-                 focus:outline-none resize-none overflow-hidden max-h-60"
-      {...inputProps}
-    />
+<textarea
+  ref={textAreaRef}
+  className="w-full rounded-xl py-2.5 px-8 first:mt-0
+             bg-green-light/10
+             text-sm sm:text-base md:text-lg
+             text-green-light font-degular font-light leading-relaxed
+             placeholder:text-green-light/60
+             focus:outline-none resize-none overflow-hidden max-h-60"
+  {...inputProps}
+/>
   );
 };
 
