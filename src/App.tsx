@@ -288,7 +288,7 @@ const generate = useCallback(async () => {
   <div className="flex flex-row sm:flex-col gap-2 justify-center sm:justify-start w-full sm:w-auto mt-4 sm:mt-0">
     <SmallButton onClick={downloadQArtCode}>
       <img src="/download_icon.svg" />
-      <span>Download Q-Art Code</span>
+      <span>Download Q&#8209;Art Code</span>
     </SmallButton>
     <SmallButton onClick={downloadQRCode}>
       <img src="/download_icon.svg" />
@@ -383,7 +383,7 @@ const SmallButton: FC<ButtonProps> = ({ className = "", ...buttonProps }) => (
     className={`
       flex items-center gap-1 sm:gap-2
       bg-green-light/5 text-green-light/40
-      text-xs sm:text-sm font-inter
+      text-sm sm:text-sm font-inter
       rounded-md px-3 py-2 sm:px-4 sm:py-2.5
       transition-colors border border-green-light/5
       min-w-0 max-w-full sm:max-w-none
