@@ -278,48 +278,44 @@ const generate = useCallback(async () => {
 
   {!loading && recentComposites.length > 0 && (
 		<>
-  {/* Image + Slider */}
-  <div className="flex flex-col items-center mt-10 w-full">
-    <div className="w-full max-w-md">
-      <CompositeImage
-        imgSrc={recentComposites[mainCompositeIndex].image}
-        qrCodeDataURL={recentComposites[mainCompositeIndex].qrCode}
+<div className="flex flex-col sm:flex-row justify-between items-start gap-4 mt-10 w-full">
+  <div className="w-full max-w-md mx-auto sm:mx-0">
+    <CompositeImage
+      imgSrc={recentComposites[mainCompositeIndex].image}
+      qrCodeDataURL={recentComposites[mainCompositeIndex].qrCode}
+    />
+  </div>
+  <div className="flex flex-row sm:flex-col gap-2 justify-center sm:justify-start w-full sm:w-auto mt-4 sm:mt-0">
+    <SmallButton onClick={downloadQArtCode}>
+      <img src="/download_icon.svg" />
+      <span>Download Q-Art Code</span>
+    </SmallButton>
+    <SmallButton onClick={downloadQRCode}>
+      <img src="/download_icon.svg" />
+      <span>Download QR Code</span>
+    </SmallButton>
+  </div>
+
+</div>
+<div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 w-full">
+  {recentComposites.map((item, idx) => (
+    <button
+      key={idx}
+      onClick={() => setMainCompositeIndex(idx)}
+      className={`transition-transform rounded-md ${
+        idx === mainCompositeIndex
+          ? "scale-105"
+          : "opacity-40 hover:opacity-100"
+      }`}
+    >
+      <img
+        src={item.image}
+        alt={`Thumbnail ${idx + 1}`}
+        className="w-full h-auto rounded-md"
       />
-    </div>
-
-    {/* Download Buttons in a Row, Always Below Image */}
-    <div className="flex flex-row justify-center gap-2 mt-4 w-full max-w-md">
-      <SmallButton onClick={downloadQArtCode}>
-        <img src="/download_icon.svg" />
-        <span>Download Q-Art Code</span>
-      </SmallButton>
-      <SmallButton onClick={downloadQRCode}>
-        <img src="/download_icon.svg" />
-        <span>Download QR Code</span>
-      </SmallButton>
-    </div>
-  </div>
-
-  {/* Thumbnails */}
-  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 w-full">
-    {recentComposites.map((item, idx) => (
-      <button
-        key={idx}
-        onClick={() => setMainCompositeIndex(idx)}
-        className={`transition-transform rounded-md ${
-          idx === mainCompositeIndex
-            ? "scale-105"
-            : "opacity-40 hover:opacity-100"
-        }`}
-      >
-        <img
-          src={item.image}
-          alt={`Thumbnail ${idx + 1}`}
-          className="w-full h-auto rounded-md"
-        />
-      </button>
-    ))}
-  </div>
+    </button>
+  ))}
+</div>
 </>
 
   )}
