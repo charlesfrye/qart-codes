@@ -278,26 +278,29 @@ const generate = useCallback(async () => {
 
   {!loading && recentComposites.length > 0 && (
 		<>
-<div className="flex flex-row justify-between items-start gap-4 mt-10 w-full overflow-x-auto">
-  <div className="w-full max-w-md">
-    <CompositeImage
-      imgSrc={recentComposites[mainCompositeIndex].image}
-      qrCodeDataURL={recentComposites[mainCompositeIndex].qrCode}
-    />
+  {/* Image + Slider */}
+  <div className="flex flex-col items-center mt-10 w-full">
+    <div className="w-full max-w-md">
+      <CompositeImage
+        imgSrc={recentComposites[mainCompositeIndex].image}
+        qrCodeDataURL={recentComposites[mainCompositeIndex].qrCode}
+      />
+    </div>
+
+    {/* Download Buttons in a Row, Always Below Image */}
+    <div className="flex flex-row justify-center gap-2 mt-4 w-full max-w-md">
+      <SmallButton onClick={downloadQArtCode}>
+        <img src="/download_icon.svg" />
+        <span>Download Q-Art Code</span>
+      </SmallButton>
+      <SmallButton onClick={downloadQRCode}>
+        <img src="/download_icon.svg" />
+        <span>Download QR Code</span>
+      </SmallButton>
+    </div>
   </div>
 
-	<div className="flex flex-col gap-2 shrink-0">
-    <SmallButton onClick={downloadQArtCode}>
-      <img src="/download_icon.svg" />
-      <span>Download Q-Art Code</span>
-    </SmallButton>
-    <SmallButton onClick={downloadQRCode}>
-      <img src="/download_icon.svg" />
-      <span>Download QR Code</span>
-    </SmallButton>
-  </div>
-</div>
-
+  {/* Thumbnails */}
   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 w-full">
     {recentComposites.map((item, idx) => (
       <button
@@ -312,7 +315,7 @@ const generate = useCallback(async () => {
         <img
           src={item.image}
           alt={`Thumbnail ${idx + 1}`}
-					className="w-full h-auto rounded-md"
+          className="w-full h-auto rounded-md"
         />
       </button>
     ))}
