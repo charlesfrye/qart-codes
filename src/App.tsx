@@ -2,8 +2,10 @@ import { useCallback, useState, useRef, useEffect } from "react";
 import { toast } from "react-toastify";
 import { CompositeImage } from "./lib/components/CompositeImage";
 import { Loader } from "./lib/components/Loader";
+import { PromptSuggestions } from "./lib/components/PromptSuggestions";
 import { createDivContainer } from "./lib/components/helpers";
 import { downloadImage } from "./lib/download";
+import { getRandomPrompts } from "./lib/prompts";
 import {
   cancelGeneration,
   startGeneration,
@@ -39,6 +41,8 @@ function App() {
 	const [recentComposites, setRecentComposites] = useState<
   { qrCode: string; image: string }[]
 >([]);
+
+  const [displayedPrompts] = useState(() => getRandomPrompts(6));
 
 const generate = useCallback(async () => {
   if (!prompt) {
@@ -249,6 +253,10 @@ const generate = useCallback(async () => {
         placeholder="Visual content or style to apply to the QR code"
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
+      />
+      <PromptSuggestions
+        prompts={displayedPrompts}
+        onPromptSelect={setPrompt}
       />
     </div>
 
