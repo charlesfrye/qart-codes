@@ -168,16 +168,16 @@ const generate = useCallback(async () => {
     <Container>
 <div className="w-full max-w-3xl mx-auto px-5 mb-4">
   <div className="flex items-center justify-between gap-2 w-full text-sm sm:text-base">
-    <div className="flex items-center gap-1 sm:gap-2 text-green-light font-degular whitespace-nowrap overflow-hidden">
+    <a href="https://modal.com/playground" className="flex items-center gap-1 sm:gap-2 text-green-light font-degular whitespace-nowrap overflow-hidden">
       <span className="truncate">Built with</span>
       <img
         src="/Modal-Logo-Light.svg"
         alt="Modal Logo"
         className="h-4 w:auto"
       />
-    </div>
+    </a>
     <a
-      href="https://modal.com/playground"
+      href="https://modal.com/blog/qart-codes-evals"
       target="_blank"
       rel="noopener noreferrer"
       className="min-w-0 shrink max-w-[50%]"
@@ -191,7 +191,7 @@ const generate = useCallback(async () => {
           whitespace-nowrap w-full overflow-hidden
         "
       >
-        <span className="truncate">Try Modal</span>
+        <span className="truncate">How it works</span>
         <img
           src="top-right_arrow.svg"
           className="h-4 w-auto shrink-0"
@@ -365,7 +365,8 @@ const Textarea: FC<TextareaProps> = ({ ...inputProps }) => {
              text-sm sm:text-base md:text-lg
              text-green-light font-degular font-light leading-relaxed
              placeholder:text-green-light/60
-             focus:outline-none resize-none overflow-hidden max-h-60"
+             focus:outline-none resize-none overflow-hiddem
+             max-h-[30rem] sm:max-h-60"
   {...inputProps}
 />
   );
