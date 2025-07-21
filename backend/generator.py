@@ -75,7 +75,6 @@ CONFIG = InferenceConfig()
     gpu=["B200", "H100!", "H200"],
     secrets=[modal.Secret.from_name("huggingface")],
     volumes={VOLUME_PATH: volume},
-    min_containers=1,
     scaledown_window=1200,
 )
 @modal.concurrent(max_inputs=10)
